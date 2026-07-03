@@ -14,43 +14,69 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.js"></script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=400;500;600;700;800&display=swap');
         
+        :root {
+            --accent-color: #3a9cd6;
+            --accent-hover: #2982b5;
+            --accent-glow: rgba(58, 156, 214, 0.15);
+        }
+
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: #0a0f1d;
         }
+        
+        .theme-bg { background-color: var(--accent-color) !important; }
+        .theme-text { color: var(--accent-color) !important; }
+        .theme-border { border-color: var(--accent-color) !important; }
+        .theme-focus:focus { border-color: var(--accent-color) !important; box-shadow: 0 0 0 2px var(--accent-glow) !important; }
+        .theme-shadow { box-shadow: 0 10px 25px -5px var(--accent-glow) !important; }
+
         .cr-slider-path { background: #1e293b !important; height: 6px !important; }
-        .cr-slider-handle { background: #3a9cd6 !important; border: none !important; width: 16px !important; height: 16px !important; top: -5px !important; }
+        .cr-slider-handle { background: var(--accent-color) !important; border: none !important; width: 16px !important; height: 16px !important; top: -5px !important; }
         .cr-boundary { border-radius: 16px !important; overflow: hidden !important; border: 1px solid #334155 !important; }
         
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 20px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 20px; border: 1px solid #0f172a; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
 
         @keyframes entradaSuave {
-            from { opacity: 0; transform: translateY(12px) scale(0.98); }
+            from { opacity: 0; transform: translateY(16px) scale(0.97); }
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
-        @keyframes pulsoPresencia {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.2); opacity: 0.7; }
+        @keyframes fadeFiltro {
+            from { opacity: 0; backdrop-filter: blur(0px); }
+            to { opacity: 1; backdrop-filter: blur(8px); }
         }
-        .animar-entrada { animation: entradaSuave 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        .pulso-estado { animation: pulsoPresencia 2s infinite ease-in-out; }
+        @keyframes popIn {
+            0% { transform: scale(0.9) opacity: 0; }
+            100% { transform: scale(1) opacity: 1; }
+        }
+
+        .animar-entrada { animation: entradaSuave 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .modal-blur-bg { animation: fadeFiltro 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .mensaje-pop { animation: popIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+
+        /* Diseños de marcos estéticos para avatares */
+        .frame-none { border: 2px solid #334155; }
+        .frame-neon { border: 2px solid var(--accent-color); box-shadow: 0 0 12px var(--accent-color); }
+        .frame-gold { border: 2px solid #fbbf24; box-shadow: 0 0 12px rgba(251, 191, 36, 0.4); }
+        .frame-cyber { border: 2px dashed #f43f5e; padding: 2px; }
+        .frame-matrix { border: 2px solid #22c55e; box-shadow: inset 0 0 8px #22c55e; }
     </style>
 </head>
-<body class="h-screen w-screen flex flex-col text-slate-200 overflow-hidden select-none p-0">
+<body class="h-screen w-screen flex flex-col text-slate-200 overflow-hidden select-none p-0 bg-[#0a0f1d]">
 
     <div id="pantalla-ban" class="fixed inset-0 bg-[#0a0f1d] z-[9999] flex flex-col items-center justify-center p-6 text-center hidden">
         <div class="w-20 h-20 bg-red-950/40 border border-red-500/30 text-red-500 rounded-full flex items-center justify-center text-4xl mb-4 animate-pulse">
             <i class="ph ph-prohibit-bold"></i>
         </div>
-        <h1 id="pantalla-ban-tipo" class="text-3xl font-extrabold text-red-500 tracking-tight mb-2">Baneado</h1>
-        <p class="text-slate-400 text-xs max-w-sm mb-4">Tu acceso a los servidores de WasaPedro ha sido revocado por violaciones a los términos del sistema.</p>
+        <h1 id="pantalla-ban-tipo" class="text-3xl font-extrabold text-red-500 tracking-tight mb-2">Sanción Aplicada</h1>
+        <p class="text-slate-400 text-xs max-w-sm mb-4">Tu acceso a los servidores centralizados ha sido bloqueado por violar los protocolos de convivencia.</p>
         <div class="bg-[#131b2e] border border-slate-800 p-4 rounded-xl max-w-md w-full">
-            <span class="text-[10px] uppercase font-bold tracking-wider text-slate-500 block mb-1">Razón de la Sanción:</span>
+            <span class="text-[10px] uppercase font-bold tracking-wider text-slate-500 block mb-1">Motivo Técnico:</span>
             <p id="pantalla-ban-razon" class="text-slate-200 text-xs italic font-medium">...</p>
         </div>
     </div>
@@ -58,277 +84,286 @@
     <div class="flex-1 w-full flex flex-col items-center justify-center p-4 overflow-hidden relative">
 
         <div id="pantalla-registro" class="bg-[#131b2e] p-8 rounded-2xl shadow-2xl border border-slate-800 max-w-sm w-full text-center hidden z-10 animar-entrada">
-            <div class="w-16 h-16 bg-[#1e293b] text-[#3a9cd6] rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 border border-slate-700 shadow-inner">
+            <div class="w-16 h-16 bg-[#1e293b] text-[#3a9cd6] theme-text rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 border border-slate-700 shadow-inner">
                 <i class="ph ph-chats-teardrop-duotone"></i>
             </div>
-            <h1 class="text-3xl font-extrabold text-[#3a9cd6] mb-1 theme-text tracking-tight">WasaPedro</h1>
-            <p class="text-slate-400 text-xs mb-6">Plataforma de comunicación en tiempo real</p>
-            <input type="text" id="input-nombre" placeholder="Tu nombre de usuario..." class="w-full bg-[#1e293b] border border-slate-700 text-white rounded-xl p-3 mb-2 focus:outline-none focus:border-[#3a9cd6] transition-all text-sm placeholder-slate-500">
-            <p id="error-registro" class="text-xs text-red-400 mb-4 h-4 italic hidden">Este nombre ya está en uso. Elige otro.</p>
+            <h1 class="text-3xl font-extrabold text-[#3a9cd6] theme-text mb-1 tracking-tight">WasaPedro</h1>
+            <p class="text-slate-400 text-xs mb-6">Whatssapp estudiantil compatible con chromebook istitucionales.</p>
+            <input type="text" id="input-nombre" placeholder="Tu identificador de usuario..." class="w-full bg-[#1e293b] border border-slate-700 text-white rounded-xl p-3 mb-2 focus:outline-none theme-focus transition-all text-sm placeholder-slate-500">
+            <p id="error-registro" class="text-xs text-red-400 mb-4 h-4 italic hidden">Este apodo está bloqueado u ocupado por otra sesión activa.</p>
+            
             <div class="bg-[#0f172a] p-3 rounded-xl border border-slate-800 mb-5 text-left">
-                <label class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1.5">¿Dispositivo nuevo? Vincula tu correo:</label>
-                <input type="email" id="input-recuperar-email" placeholder="correo@institucion.edu (Opcional)" class="w-full bg-[#1e293b] text-xs text-white border border-slate-800 rounded-lg p-2.5 focus:outline-none focus:border-slate-700">
+                <label class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1.5">Ecosistema Cloud (Opcional):</label>
+                <input type="email" id="input-recuperar-email" placeholder="correo@ejemplo.edu" class="w-full bg-[#1e293b] text-xs text-white border border-slate-800 rounded-lg p-2.5 focus:outline-none focus:border-slate-700">
             </div>
-            <button id="btn-guardar" class="w-full bg-[#3a9cd6] theme-bg hover:opacity-95 text-white font-semibold p-3 rounded-xl transition-all shadow-lg shadow-sky-500/10 active:scale-[0.98] disabled:opacity-50 text-sm">Ingresar / Restaurar</button>
+            <button id="btn-guardar" onclick="procesarRegistroInicial()" class="w-full bg-[#3a9cd6] theme-bg hover:opacity-90 text-white font-semibold p-3 rounded-xl transition-all theme-shadow active:scale-[0.98] disabled:opacity-50 text-sm">Ingresar al Sistema</button>
         </div>
 
-        <div id="interfaz-principal" class="w-full max-w-5xl h-[88vh] bg-[#131b2e] rounded-2xl shadow-2xl border border-slate-800/80 overflow-hidden hidden z-10 animar-entrada">
+        <div id="interfaz-principal" class="w-full max-w-6xl h-[88vh] bg-[#131b2e] rounded-2xl shadow-2xl border border-slate-800/80 overflow-hidden hidden z-10 animar-entrada">
             
-            <div class="w-1/3 border-r border-slate-800 flex flex-col bg-[#131b2e]">
-                <div class="p-4 bg-[#1e293b]/60 border-b border-slate-800/50 flex justify-between items-center">
+            <div class="w-1/3 border-r border-slate-800/70 flex flex-col bg-[#131b2e]">
+                <div class="p-4 bg-[#1e293b]/50 border-b border-slate-800/50 flex justify-between items-center">
                     <div class="flex items-center gap-3 min-w-0">
-                        <img id="avatar-usuario-img" src="" class="w-10 h-10 rounded-full object-cover hidden border border-slate-700">
-                        <div id="avatar-usuario-txt" class="w-10 h-10 bg-[#1e293b] text-[#3a9cd6] font-bold rounded-full flex items-center justify-center text-base border border-slate-700 hidden">?</div>
+                        <div class="relative">
+                            <img id="avatar-usuario-img" src="" class="w-10 h-10 rounded-full object-cover hidden frame-none">
+                            <div id="avatar-usuario-txt" class="w-10 h-10 bg-[#1e293b] text-[#3a9cd6] theme-text font-bold rounded-full flex items-center justify-center text-base border border-slate-700 hidden">?</div>
+                        </div>
                         <div class="flex flex-col min-w-0">
-                            <span id="nombre-usuario-pantalla" class="font-semibold text-sm truncate text-white">...</span>
-                            <span id="indicador-conexion" class="text-[10px] font-medium text-yellow-500 flex items-center gap-1">
-                                <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 inline-block animate-pulse"></span> Conectando...
+                            <span id="nombre-usuario-pantalla" class="font-bold text-sm truncate text-white">...</span>
+                            <span id="indicador-conexion" class="text-[10px] font-semibold text-yellow-500 flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 inline-block animate-pulse"></span> Sincronizando...
                             </span>
                         </div>
                     </div>
                     <div class="flex gap-1">
-                        <button onclick="abrirModalGrupo()" class="text-xl text-slate-400 hover:text-white p-2 rounded-xl hover:bg-[#1e293b] transition-all" title="Crear Grupo">
+                        <button onclick="abrirModalGrupo()" class="text-xl text-slate-400 hover:text-white p-2 rounded-xl hover:bg-[#1e293b] transition-all" title="Crear Espacio Grupal">
                             <i class="ph ph-users-three"></i>
                         </button>
-                        <button id="btn-config" onclick="abrirModalConfiguracion()" class="text-xl text-slate-400 hover:text-white p-2 rounded-xl hover:bg-[#1e293b] transition-all" title="Configuración">
-                            <i class="ph ph-gear"></i>
+                        <button id="btn-config" onclick="abrirModalConfiguracion()" class="text-xl text-slate-400 hover:text-white p-2 rounded-xl hover:bg-[#1e293b] transition-all" title="Ajustes y Personalización">
+                            <i class="ph ph-sliders"></i>
                         </button>
                     </div>
                 </div>
 
                 <div class="p-3 bg-[#131b2e] border-b border-slate-800/40">
                     <div class="flex flex-col gap-2 bg-[#1e293b] rounded-xl p-2 border border-slate-800 focus-within:border-slate-700 transition-all">
-                        <input type="text" id="input-buscar" placeholder="Buscar amigo o ID de grupo..." class="bg-transparent text-xs w-full focus:outline-none text-white placeholder-slate-500 px-1 py-1">
-                        <button onclick="buscarAmigo()" class="bg-[#3a9cd6] theme-bg text-white text-xs font-medium py-1.5 px-3 rounded-lg w-full transition-all active:scale-[0.99]">Abrir Chat / Unirse</button>
+                        <input type="text" id="input-buscar" placeholder="Identificador de usuario o canal..." class="bg-transparent text-xs w-full focus:outline-none text-white placeholder-slate-500 px-1 py-1">
+                        <button onclick="buscarAmigo()" class="bg-[#3a9cd6] theme-bg text-white text-xs font-semibold py-1.5 px-3 rounded-lg w-full transition-all active:scale-[0.99]">Establecer Canal Directo</button>
                     </div>
                 </div>
 
                 <div class="p-3 border-b border-slate-800/30 bg-[#0f172a]/30">
-                    <h2 class="text-[10px] font-bold tracking-wider text-slate-400 uppercase mb-1.5 px-1">Mensajes sin leer</h2>
+                    <h2 class="text-[10px] font-bold tracking-wider text-slate-500 uppercase mb-1.5 px-1">Alertas en Cola</h2>
                     <div id="lista-notificaciones" class="space-y-1 text-xs max-h-20 overflow-y-auto px-1">
-                        <p class="italic text-slate-500 text-[11px]">Sin avisos pendientes.</p>
+                        <p class="italic text-slate-600 text-[11px]">Canales estables. Sin alertas en espera.</p>
                     </div>
                 </div>
 
                 <div class="flex-1 overflow-y-auto p-2 space-y-1" id="lista-amigos">
-                    <h2 class="text-[10px] font-bold tracking-wider text-slate-400 uppercase p-2">Conversaciones Recientes</h2>
+                    <h2 class="text-[10px] font-bold tracking-wider text-slate-400 uppercase p-2 tracking-widest">Canales Activos</h2>
                     <div id="contenedor-lista-dinamica" class="space-y-1"></div>
                 </div>
             </div>
 
             <div class="flex-1 flex flex-col bg-[#0f172a]" id="pantalla-chat-vacia">
                 <div class="m-auto text-center max-w-xs px-4">
-                    <div class="text-5xl text-slate-700 mb-3"><i class="ph ph-chat-circle-dots-thin"></i></div>
-                    <h3 class="text-base font-semibold text-slate-300">WasaPedro Cyber Edition</h3>
-                    <p class="text-xs text-slate-500 mt-1.5 leading-relaxed">Whasapp estudiantil compatible con chromebooks institucionales</p>
+                    <div class="text-6xl text-slate-800 mb-3"><i class="ph ph-terminal-window-thin"></i></div>
+                    <h3 class="text-base font-bold text-slate-400 tracking-wide">WasaPedro Terminal Engine</h3>
+                    <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">Inicia o selecciona una transmisión segura de datos de la barra lateral.</p>
                 </div>
             </div>
 
-            <div class="flex-1 flex flex-col bg-[#0f172a] relative hidden animate-fade-in" id="pantalla-chat-activa">
-                <div id="zona-drop-visual" class="absolute inset-0 bg-[#3a9cd6]/10 border-4 border-dashed border-[#3a9cd6] z-50 flex flex-col items-center justify-center backdrop-blur-sm pointer-events-none transition-all duration-200 opacity-0">
-                    <i class="ph ph-cloud-arrow-up text-5xl text-white mb-2 animate-bounce"></i>
-                    <p class="text-sm font-bold text-white">Suelta el archivo para cargarlo</p>
+            <div class="flex-1 flex flex-col bg-[#0f172a] relative hidden text-slate-100" id="pantalla-chat-activa">
+                <div id="zona-drop-visual" class="absolute inset-0 bg-[#0f172a]/90 border-4 border-dashed border-sky-500/50 z-50 flex flex-col items-center justify-center backdrop-blur-sm pointer-events-none transition-all duration-300 opacity-0">
+                    <i class="ph ph-upload-simple text-5xl text-[#3a9cd6] theme-text mb-2 animate-bounce"></i>
+                    <p class="text-sm font-bold text-white">Transmitir binario al canal activo</p>
                 </div>
 
                 <div class="p-4 bg-[#1e293b]/60 flex items-center justify-between border-b border-slate-800/50">
                     <div class="flex items-center gap-3">
                         <div class="relative">
-                            <img id="avatar-chat-img" src="" class="w-9 h-9 rounded-full object-cover hidden border border-slate-700">
-                            <div class="w-9 h-9 bg-[#1e293b] text-[#3a9cd6] font-bold rounded-full flex items-center justify-center text-xs border border-slate-700 hidden" id="avatar-chat-txt">?</div>
-                            <span id="dot-presencia-cabecera" class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[#131b2e] hidden"></span>
+                            <img id="avatar-chat-img" src="" class="w-9 h-9 rounded-full object-cover hidden">
+                            <div class="w-9 h-9 bg-[#1e293b] text-[#3a9cd6] theme-text font-bold rounded-full flex items-center justify-center text-xs border border-slate-700 hidden" id="avatar-chat-txt">?</div>
                         </div>
                         <div>
-                            <span id="nombre-chat-amigo" class="font-semibold text-sm block text-white">...</span>
+                            <span id="nombre-chat-amigo" class="font-bold text-sm block text-white">...</span>
                             <span id="sub-chat-info" class="text-[10px] text-slate-400 block hidden"></span>
                         </div>
                     </div>
                     
                     <div class="relative">
-                        <button onclick="toggleMenuOpcionesChat()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-[#1e293b] transition-all" title="Opciones de chat">
-                            <i class="ph ph-dots-three-vertical text-xl"></i>
+                        <button onclick="toggleMenuOpcionesChat()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-[#1e293b] transition-all">
+                            <i class="ph ph-dots-three-vertical-bold text-xl"></i>
                         </button>
-                        <div id="menu-opciones-chat" class="absolute right-0 mt-2 w-48 bg-[#1e293b] border border-slate-800 rounded-xl shadow-2xl hidden z-50 py-1.5 text-xs">
-                            <button id="btn-menu-foto-grupo" onclick="iniciarCambioFotoGrupo()" class="hidden w-full text-left px-4 py-2.5 hover:bg-[#2a3942]/40 text-slate-200 items-center gap-2 text-xs"><i class="ph ph-camera"></i> Cambiar Foto Grupo</button>
-                            <button id="btn-menu-agregar-grupo" onclick="abrirModalAgregarMiembros()" class="hidden w-full text-left px-4 py-2.5 hover:bg-[#2a3942]/40 text-slate-200 items-center gap-2 text-xs"><i class="ph ph-user-plus"></i> Agregar Personas</button>
-                            <button onclick="menuPonerApodo()" class="w-full text-left px-4 py-2.5 hover:bg-[#2a3942]/40 text-slate-200 flex items-center gap-2"><i class="ph ph-pencil"></i> Poner Apodo</button>
-                            <button onclick="menuBorrarChat()" class="w-full text-left px-4 py-2.5 hover:bg-[#2a3942]/40 text-slate-200 flex items-center gap-2"><i class="ph ph-trash"></i> Borrar Chat</button>
-                            <button id="btn-menu-bloquear" onclick="menuBloquearContacto()" class="w-full text-left px-4 py-2.5 hover:bg-[#2a3942]/40 text-slate-200 flex items-center gap-2"><i class="ph ph-prohibit"></i> Bloquear</button>
-                            <hr class="border-slate-800 my-1">
-                            <button onclick="abrirModalReporte()" class="w-full text-left px-4 py-2.5 hover:bg-red-500/10 text-red-400 flex items-center gap-2"><i class="ph ph-warning-octagon"></i> Denunciar</button>
+                        <div id="menu-opciones-chat" class="absolute right-0 mt-2 w-52 bg-[#1e293b] border border-slate-800 rounded-xl shadow-2xl hidden z-50 py-1.5 text-xs animar-entrada">
+                            <button id="btn-menu-foto-grupo" onclick="iniciarCambioFotoGrupo()" class="hidden w-full text-left px-4 py-2.5 hover:bg-slate-800 text-slate-200 items-center gap-2"><i class="ph ph-camera"></i> Identidad del Grupo</button>
+                            <button id="btn-menu-agregar-grupo" onclick="abrirModalAgregarMiembros()" class="hidden w-full text-left px-4 py-2.5 hover:bg-slate-800 text-slate-200 items-center gap-2"><i class="ph ph-user-plus"></i> Forzar Conexión Miembro</button>
+                            <button onclick="menuPonerApodo()" class="w-full text-left px-4 py-2.5 hover:bg-slate-800 text-slate-200 flex items-center gap-2"><i class="ph ph-identification-badge"></i> Configurar Apodo</button>
+                            <button onclick="menuArchivarOcultarChat()" class="w-full text-left px-4 py-2.5 hover:bg-slate-800 text-amber-400 flex items-center gap-2"><i class="ph ph-archive-box"></i> Ocultar de Recientes</button>
+                            <button onclick="menuBorrarChat()" class="w-full text-left px-4 py-2.5 hover:bg-slate-800 text-red-400 flex items-center gap-2"><i class="ph ph-trash-simple"></i> Purgar Historial</button>
+                            <button id="btn-menu-bloquear" onclick="menuBloquearContacto()" class="w-full text-left px-4 py-2.5 hover:bg-slate-800 text-red-500 flex items-center gap-2"><i class="ph ph-shield-warning"></i> Restringir Canal</button>
                         </div>
                     </div>
                 </div>
                 
-                <div class="flex-1 overflow-y-auto p-4 space-y-3" id="contenedor-mensajes"></div>
+                <div class="flex-1 overflow-y-auto p-4 space-y-3 bg-[#0a0f1d]/40" id="contenedor-mensajes"></div>
                 
-                <div class="p-4 bg-[#131b2e] border-t border-slate-800/40 flex gap-3 items-center relative">
-                    <input type="file" id="input-archivo" class="hidden" onchange="procesarArchivoAdjunto(this.files[0])">
-                    <button onclick="document.getElementById('input-archivo').click()" class="text-xl text-slate-400 hover:text-white transition-all p-1 flex items-center justify-center bg-[#1e293b] rounded-xl w-10 h-10 border border-slate-800 hover:border-slate-700">
-                        <i class="ph ph-paperclip"></i>
-                    </button>
-                    <input type="text" id="input-mensaje" placeholder="Escribe un mensaje seguro..." class="flex-1 bg-[#1e293b] border border-slate-800 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-slate-700 transition-all placeholder-slate-500">
-                    <button onclick="enviarMensajeTexto()" class="bg-[#3a9cd6] theme-bg text-white font-medium px-5 py-3 rounded-xl text-sm hover:opacity-95 shadow-md shadow-sky-500/5 transition-all active:scale-[0.97]">Enviar</button>
+                <div id="panel-stickers" class="absolute bottom-20 left-4 bg-[#1e293b] border border-slate-800 p-3 rounded-xl shadow-2xl hidden z-50 w-64 max-h-48 overflow-y-auto">
+                    <div class="flex justify-between items-center mb-2 border-b border-slate-800 pb-1">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Paquete de Stickers</span>
+                        <button onclick="togglePanelStickers()" class="text-slate-400 hover:text-white"><i class="ph ph-x"></i></button>
+                    </div>
+                    <div class="grid grid-cols-4 gap-2 text-2xl" id="grid-stickers-dinamicos"></div>
+                </div>
+
+                <div class="p-4 bg-[#131b2e] border-t border-slate-800/40 flex gap-2 items-center relative">
+                    <input type="file" id="input-archivo" class="hidden" onchange="procesarArchivoAdjunto(this.files[0], 'file')">
+                    <input type="file" id="input-foto" class="hidden" accept="image/*" onchange="procesarArchivoAdjunto(this.files[0], 'image')">
+                    
+                    <div class="flex gap-1 bg-[#1e293b] p-1 rounded-xl border border-slate-800">
+                        <button onclick="document.getElementById('input-archivo').click()" class="text-slate-400 hover:text-white transition-all w-9 h-9 flex items-center justify-center rounded-lg hover:bg-slate-800" title="Documentos/Binarios">
+                            <i class="ph ph-paperclip-bold text-lg"></i>
+                        </button>
+                        <button onclick="document.getElementById('input-foto').click()" class="text-slate-400 hover:text-white transition-all w-9 h-9 flex items-center justify-center rounded-lg hover:bg-slate-800" title="Imágenes">
+                            <i class="ph ph-image-square-bold text-lg"></i>
+                        </button>
+                        <button onclick="togglePanelStickers()" class="text-slate-400 hover:text-white transition-all w-9 h-9 flex items-center justify-center rounded-lg hover:bg-slate-800" title="Stickers">
+                            <i class="ph ph-smiley-wink-bold text-lg"></i>
+                        </button>
+                    </div>
+                    
+                    <input type="text" id="input-mensaje" placeholder="Escribir trama cifrada para el canal..." class="flex-1 bg-[#1e293b] border border-slate-800 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-slate-700 transition-all placeholder-slate-600">
+                    <button onclick="enviarMensajeTexto()" class="bg-[#3a9cd6] theme-bg text-white font-bold px-5 py-3 rounded-xl text-sm hover:opacity-90 transition-all active:scale-[0.97] theme-shadow">Transmitir</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="modal-grupo" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 hidden z-50">
+    <div id="modal-grupo" class="fixed inset-0 bg-black/70 flex items-center justify-center p-4 hidden z-50 modal-blur-bg">
         <div class="bg-[#131b2e] border border-slate-800 w-full max-w-sm rounded-2xl p-6 shadow-2xl animar-entrada">
-            <h2 class="text-base font-bold text-white mb-2 flex items-center gap-2"><i class="ph ph-users-three text-[#3a9cd6] theme-text"></i> Crear Nuevo Grupo</h2>
-            <p class="text-xs text-slate-400 mb-4 leading-relaxed">Asigna un nombre descriptivo. Como creador tendrás control administrativo total sobre la foto y los miembros.</p>
-            <input type="text" id="input-nombre-grupo" placeholder="Nombre del grupo..." class="w-full bg-[#1e293b] border border-slate-800 text-sm text-white rounded-xl p-3 mb-4 focus:outline-none focus:border-slate-700">
+            <h2 class="text-base font-bold text-white mb-2 flex items-center gap-2"><i class="ph ph-users-three text-[#3a9cd6] theme-text"></i> Inicializar Nodo Multicast</h2>
+            <p class="text-xs text-slate-400 mb-4 leading-relaxed">Establece un canal grupal. Al ser administrador inicial, podrás definir tokens y membresías.</p>
+            <input type="text" id="input-nombre-grupo" placeholder="Nombre de la sala..." class="w-full bg-[#1e293b] border border-slate-800 text-sm text-white rounded-xl p-3 mb-4 focus:outline-none">
             <div class="flex gap-2 justify-end">
                 <button onclick="cerrarModalGrupo()" class="px-4 py-2 text-xs text-slate-400 hover:text-white">Cancelar</button>
-                <button onclick="procesarCrearGrupo()" class="px-5 py-2 text-xs bg-[#3a9cd6] theme-bg text-white font-medium rounded-xl shadow-lg shadow-sky-500/10">Crear</button>
+                <button onclick="procesarCrearGrupo()" class="px-5 py-2 text-xs bg-[#3a9cd6] theme-bg text-white font-bold rounded-xl">Inicializar</button>
             </div>
         </div>
     </div>
 
-    <div id="modal-agregar-miembros" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 hidden z-50">
+    <div id="modal-agregar-miembros" class="fixed inset-0 bg-black/70 flex items-center justify-center p-4 hidden z-50 modal-blur-bg">
         <div class="bg-[#131b2e] border border-slate-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl flex flex-col max-h-[80vh] animar-entrada">
-            <h2 class="text-sm font-bold text-white mb-3 flex items-center gap-2"><i class="ph ph-user-plus text-[#3a9cd6] theme-text"></i> Agregar Miembros al Grupo</h2>
-            <p class="text-[11px] text-slate-400 mb-3">Haz clic en añadir para integrar a tus contactos guardados al grupo actual de forma instantánea.</p>
+            <h2 class="text-sm font-bold text-white mb-3 flex items-center gap-2"><i class="ph ph-user-plus text-[#3a9cd6] theme-text"></i> Interconectar Canales Externos</h2>
             <div class="flex-1 overflow-y-auto space-y-2" id="lista-contactos-para-grupo"></div>
             <div class="flex justify-end pt-3 border-t border-slate-800 mt-2">
-                <button onclick="document.getElementById('modal-agregar-miembros').classList.add('hidden')" class="px-4 py-2 text-xs text-slate-400 hover:text-white">Finalizar</button>
+                <button onclick="document.getElementById('modal-agregar-miembros').classList.add('hidden')" class="px-4 py-2 text-xs text-slate-400 hover:text-white">Cerrar</button>
             </div>
         </div>
     </div>
 
-    <div id="modal-crop" class="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 hidden z-[60]">
-        <div class="bg-[#131b2e] border border-slate-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl flex flex-col animar-entrada">
-            <h2 class="text-xs font-bold text-white mb-4 text-center uppercase tracking-wider">Ajustar Imagen de Perfil</h2>
-            <div id="contenedor-croppie" class="w-full h-64 bg-[#0f172a] rounded-xl overflow-hidden mb-2"></div>
-            <div class="flex gap-3 justify-center pt-3">
-                <button onclick="cancelarRecorte()" class="px-5 py-2 text-xs bg-[#1e293b] text-slate-300 rounded-xl hover:bg-slate-800">Cancelar</button>
-                <button onclick="finalizarRecorte()" class="px-5 py-2 text-xs bg-[#3a9cd6] theme-bg text-white font-medium rounded-xl hover:opacity-95 flex items-center gap-1">
-                    <i class="ph ph-crop"></i> Guardar Imagen
+    <div id="modal-crop" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 hidden z-[60] modal-blur-bg">
+        <div class="bg-[#131b2e] border border-slate-800 w-full max-w-md rounded-2xl p-5 shadow-2xl flex flex-col animar-entrada">
+            <h2 class="text-xs font-bold text-white mb-4 text-center uppercase tracking-wider">Ajuste de Identidad Visual</h2>
+            <div id="contenedor-croppie" class="w-full h-64 bg-[#0f172a] rounded-xl overflow-hidden mb-4"></div>
+            
+            <div class="mb-4">
+                <label class="text-[10px] font-bold uppercase text-slate-400 block mb-2">Diseño y Marco del Avatar</label>
+                <div class="grid grid-cols-5 gap-1.5 text-[10px] text-center">
+                    <button onclick="seleccionarMarcoAvatar('frame-none')" class="p-2 bg-slate-800 rounded border border-slate-700 hover:border-sky-500">Normal</button>
+                    <button onclick="seleccionarMarcoAvatar('frame-neon')" class="p-2 bg-slate-800 rounded border border-sky-500 text-sky-400 font-bold">Neón</button>
+                    <button onclick="seleccionarMarcoAvatar('frame-gold')" class="p-2 bg-slate-800 rounded border border-amber-500 text-amber-400 font-bold">Oro</button>
+                    <button onclick="seleccionarMarcoAvatar('frame-cyber')" class="p-2 bg-slate-800 rounded border border-rose-500 text-rose-400 font-bold">Cyber</button>
+                    <button onclick="seleccionarMarcoAvatar('frame-matrix')" class="p-2 bg-slate-800 rounded border border-green-500 text-green-400 font-bold">Matrix</button>
+                </div>
+            </div>
+
+            <div class="flex gap-3 justify-center pt-2">
+                <button onclick="cancelarRecorte()" class="px-5 py-2 text-xs bg-[#1e293b] text-slate-300 rounded-xl">Descartar</button>
+                <button onclick="finalizarRecorte()" class="px-5 py-2 text-xs bg-[#3a9cd6] theme-bg text-white font-bold rounded-xl flex items-center gap-1">
+                    <i class="ph ph-crop"></i> Compilar E Inyectar
                 </button>
             </div>
         </div>
     </div>
 
-    <div id="modal-config" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 hidden z-50">
+    <div id="modal-config" class="fixed inset-0 bg-black/70 flex items-center justify-center p-4 hidden z-50 modal-blur-bg">
         <div class="bg-[#131b2e] border border-slate-800 w-full max-w-md rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto animar-entrada">
             <div class="flex justify-between items-center mb-5">
-                <h2 class="text-base font-bold text-white flex items-center gap-2"><i class="ph ph-gear"></i> Ajustes de Sistema</h2>
+                <h2 class="text-base font-bold text-white flex items-center gap-2"><i class="ph ph-sliders"></i> Panel de Configuración Core</h2>
                 <button onclick="document.getElementById('modal-config').classList.add('hidden')" class="text-slate-400 hover:text-white text-lg"><i class="ph ph-x"></i></button>
             </div>
 
             <div class="mb-5 p-4 bg-[#0f172a]/40 border border-slate-800/80 rounded-xl">
                 <label class="text-[10px] font-bold uppercase tracking-wider text-[#3a9cd6] theme-text block mb-3 flex items-center gap-1">
-                    <i class="ph ph-user-circle-gear text-sm"></i> Cuenta y Credenciales
+                    <i class="ph ph-fingerprint text-sm"></i> Matriz de Identidad
                 </label>
                 
                 <div class="flex items-center gap-4 mb-4 bg-[#131b2e] p-3 rounded-xl border border-slate-800">
                     <div class="relative group flex-shrink-0">
-                        <img id="preview-config-avatar" src="" class="w-14 h-14 rounded-full object-cover bg-slate-800 hidden border border-slate-700">
-                        <div id="preview-config-txt" class="w-14 h-14 bg-[#1e293b] text-[#3a9cd6] font-bold text-xl rounded-full flex items-center justify-center hidden border border-slate-700">?</div>
-                        
-                        <label for="input-avatar-file" class="absolute inset-0 bg-black/70 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-all duration-200 text-[9px] text-white text-center font-bold p-1">
+                        <img id="preview-config-avatar" src="" class="w-14 h-14 rounded-full object-cover bg-slate-800 hidden">
+                        <div id="preview-config-txt" class="w-14 h-14 bg-[#1e293b] text-[#3a9cd6] theme-text font-bold text-xl rounded-full flex items-center justify-center hidden border border-slate-700">?</div>
+                        <label for="input-avatar-file" class="absolute inset-0 bg-black/80 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-all duration-200 text-[9px] text-white font-bold p-1">
                             <i class="ph ph-camera text-sm mb-0.5"></i> Cambiar
                         </label>
-                        <input type="file" id="input-avatar-file" class="hidden" accept="image/png, image/jpeg, image/jpg" onchange="iniciarProcesoRecorte(this.files[0])">
+                        <input type="file" id="input-avatar-file" class="hidden" accept="image/*" onchange="iniciarProcesoRecorte(this.files[0])">
                     </div>
                     <div class="flex-1 min-w-0">
-                        <span class="text-[10px] text-slate-500 block">Usuario Activo</span>
-                        <span class="text-sm font-semibold text-white truncate block" id="config-nombre-usuario">...</span>
+                        <span class="text-[10px] text-slate-500 block">Canal Local Activo</span>
+                        <span class="text-sm font-bold text-white truncate block" id="config-nombre-usuario">...</span>
                     </div>
                 </div>
 
                 <div class="space-y-3">
                     <div>
-                        <span class="text-[10px] text-slate-400 block mb-1">Correo para Respaldo Cloud:</span>
-                        <div class="flex gap-2">
-                            <input type="email" id="input-cuenta-gmail" placeholder="tu-correo@ejemplo.com" class="flex-1 bg-[#1e293b] border border-slate-800 text-xs p-2 rounded-lg text-white focus:outline-none focus:border-slate-700">
-                            <button onclick="guardarCorreoVinculado()" class="bg-[#1e293b] text-xs text-slate-300 border border-slate-700 px-3 rounded-lg hover:bg-slate-800">Guardar</button>
+                        <span class="text-[10px] text-slate-400 block mb-1">Color de Interfaz Personalizado</span>
+                        <div class="flex gap-2 items-center">
+                            <input type="color" id="picker-color-tema" onchange="cambiarTema(this.value)" class="w-8 h-8 bg-transparent border-0 cursor-pointer">
+                            <div class="grid grid-cols-4 gap-1 flex-1">
+                                <button onclick="cambiarTema('#3a9cd6')" class="h-6 bg-[#3a9cd6] rounded"></button>
+                                <button onclick="cambiarTema('#10b981')" class="h-6 bg-[#10b981] rounded"></button>
+                                <button onclick="cambiarTema('#8b5cf6')" class="h-6 bg-[#8b5cf6] rounded"></button>
+                                <button onclick="cambiarTema('#f43f5e')" class="h-6 bg-[#f43f5e] rounded"></button>
+                            </div>
                         </div>
                     </div>
-                    <div class="pt-1 flex flex-wrap gap-2">
-                        <button onclick="subirCopiaNube()" class="flex-1 bg-[#3a9cd6] theme-bg text-white font-medium py-2 px-3 rounded-lg text-xs text-center hover:opacity-95 flex items-center justify-center gap-1">
-                            <i class="ph ph-cloud-arrow-up text-sm"></i> Guardar Respaldo
+
+                    <div class="pt-2 flex flex-wrap gap-1.5">
+                        <button id="btn-usuarios-admin-view" onclick="abrirModalUsuariosAdmin()" class="hidden bg-purple-600/20 border border-purple-500/30 text-purple-400 font-bold py-2 px-3 rounded-lg text-xs hover:bg-purple-600 hover:text-white transition-all flex items-center justify-center gap-1 flex-1">
+                            <i class="ph ph-users text-sm"></i> Terminal Admin
                         </button>
-                        <button id="btn-usuarios-admin-view" onclick="abrirModalUsuariosAdmin()" class="hidden bg-purple-600/20 border border-purple-500/30 text-purple-400 font-semibold py-2 px-3 rounded-lg text-xs hover:bg-purple-600 hover:text-white transition-all flex items-center justify-center gap-1">
-                            <i class="ph ph-users text-sm"></i> Usuarios
-                        </button>
-                        <button onclick="abrirModalAdminLogin()" class="bg-yellow-600/10 border border-yellow-600/30 text-yellow-500 font-medium py-2 px-4 rounded-lg text-xs hover:bg-yellow-600 hover:text-white transition-all flex items-center justify-center gap-1">
-                            <i class="ph ph-shield-star text-sm"></i> Consola Admin
+                        <button onclick="abrirModalAdminLogin()" class="bg-yellow-600/10 border border-yellow-600/30 text-yellow-500 font-semibold py-2 px-3 rounded-lg text-xs hover:bg-yellow-600 hover:text-white transition-all flex items-center justify-center gap-1">
+                            <i class="ph ph-shield-check text-sm"></i> Consola Root
                         </button>
                         <button onclick="cerrarSesionLimpiar()" class="bg-red-500/10 border border-red-500/20 text-red-400 py-2 px-3 rounded-lg text-xs hover:bg-red-500 hover:text-white transition-all">
-                            Cerrar Sesión
+                            Cerrar Nodo
                         </button>
                     </div>
-                    <p id="status-cloud" class="text-[10px] italic text-slate-400 text-center h-3"></p>
                 </div>
             </div>
             
-            <div class="mb-5">
-                <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2.5">Tonalidad del Sistema</label>
-                <div class="grid grid-cols-4 gap-2">
-                    <button onclick="cambiarTema('#3a9cd6')" class="w-full h-9 bg-[#3a9cd6] rounded-lg font-medium text-xs text-white">Celeste</button>
-                    <button onclick="cambiarTema('#2563eb')" class="w-full h-9 bg-[#2563eb] rounded-lg font-medium text-xs text-white">Azul</button>
-                    <button onclick="cambiarTema('#8b5cf6')" class="w-full h-9 bg-[#8b5cf6] rounded-lg font-medium text-xs text-white">Morado</button>
-                    <button onclick="cambiarTema('#64748b')" class="w-full h-9 bg-[#64748b] rounded-lg font-medium text-xs text-white">Gris</button>
-                </div>
-            </div>
-
             <div>
-                <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">Lista de Bloqueados</label>
-                <div id="contenedor-bloqueados" class="bg-[#0f172a]/30 border border-slate-800 rounded-xl p-3 max-h-32 overflow-y-auto space-y-1.5"></div>
+                <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">Canales Restringidos (Blacklist)</label>
+                <div id="contenedor-bloqueados" class="bg-[#0f172a]/30 border border-slate-800 rounded-xl p-3 max-h-32 overflow-y-auto space-y-1.5 text-xs"></div>
             </div>
         </div>
     </div>
 
-    <div id="modal-admin-usuarios" class="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 hidden z-50">
-        <div class="bg-[#131b2e] border border-slate-800 w-full max-w-md h-[75vh] rounded-2xl p-6 shadow-2xl flex flex-col animar-entrada">
+    <div id="modal-admin-usuarios" class="fixed inset-0 bg-black/70 flex items-center justify-center p-4 hidden z-50 modal-blur-bg">
+        <div class="bg-[#131b2e] border border-slate-800 w-full max-w-lg h-[75vh] rounded-2xl p-6 shadow-2xl flex flex-col animar-entrada">
             <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-800">
-                <h2 class="text-sm font-bold text-yellow-500 flex items-center gap-2"><i class="ph ph-users"></i> Registro Global de Usuarios</h2>
+                <h2 class="text-sm font-bold text-yellow-500 flex items-center gap-2"><i class="ph ph-users-four"></i> Registro Global de Nodos en Red</h2>
                 <button onclick="document.getElementById('modal-admin-usuarios').classList.add('hidden')" class="text-slate-400 hover:text-white"><i class="ph ph-x"></i></button>
             </div>
             <div class="flex-1 overflow-y-auto space-y-2" id="lista-usuarios-global-contenedor"></div>
         </div>
     </div>
 
-    <div id="modal-reporte" class="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 hidden z-[70]">
-        <div class="bg-[#131b2e] border border-slate-800 w-full max-w-sm rounded-2xl p-6 shadow-2xl animar-entrada">
-            <h2 class="text-base font-bold text-red-500 mb-1 flex items-center gap-2">
-                <i class="ph ph-warning-octagon text-lg"></i> Denunciar Conversación
-            </h2>
-            <p class="text-xs text-slate-400 mb-4">Reportando a: <strong id="nombre-reportado-txt" class="text-white">...</strong></p>
-            <textarea id="input-motivo-reporte" rows="4" placeholder="Explica detalladamente el motivo de tu denuncia..." class="w-full bg-[#1e293b] border border-slate-800 text-xs text-white rounded-xl p-3 mb-4 focus:outline-none resize-none focus:border-red-500 transition-all"></textarea>
-            <div class="flex gap-2 justify-end">
-                <button onclick="cerrarModalReporte()" class="px-4 py-2 text-xs text-slate-400 hover:text-white">Cancelar</button>
-                <button onclick="enviarReporte()" class="px-4 py-2 text-xs bg-red-600 text-white font-medium rounded-xl hover:bg-red-700">Enviar Reporte</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-admin-login" class="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 hidden z-[70]">
+    <div id="modal-admin-login" class="fixed inset-0 bg-black/70 flex items-center justify-center p-4 hidden z-[70] modal-blur-bg">
         <div class="bg-[#131b2e] border border-yellow-600/50 w-full max-w-xs rounded-2xl p-6 shadow-2xl text-center animar-entrada">
             <i class="ph ph-shield-star text-4xl text-yellow-500 mb-1"></i>
-            <h2 class="text-sm font-bold text-white mb-3">Seguridad de Administración</h2>
-            <input type="password" id="input-admin-pass" placeholder="Introduce la contraseña..." class="w-full bg-[#1e293b] border border-slate-800 text-xs text-white rounded-xl p-3 mb-4 focus:outline-none text-center focus:border-yellow-500">
+            <h2 class="text-sm font-bold text-white mb-3">Autenticación Root Obligatoria</h2>
+            <input type="password" id="input-admin-pass" placeholder="Clave criptográfica..." class="w-full bg-[#1e293b] border border-slate-800 text-xs text-white rounded-xl p-3 mb-4 focus:outline-none text-center">
             <div class="flex gap-2 justify-center">
-                <button onclick="document.getElementById('modal-admin-login').classList.add('hidden')" class="px-4 py-2 text-xs text-slate-400 hover:text-white">Cancelar</button>
-                <button onclick="verificarAdmin()" class="px-4 py-2 text-xs bg-yellow-600 text-white font-medium rounded-xl hover:bg-yellow-500">Acceder</button>
+                <button onclick="document.getElementById('modal-admin-login').classList.add('hidden')" class="px-4 py-2 text-xs text-slate-400 hover:text-white">Abortar</button>
+                <button onclick="verificarAdmin()" class="px-4 py-2 text-xs bg-yellow-600 text-white font-bold rounded-xl">Desbloquear</button>
             </div>
         </div>
     </div>
 
     <script>
-        // COMPROBACIÓN INMEDIATA ANTI-VETO ANTES DE LEVANTAR LA UI
+        // CONFIGURACIÓN E INICIALIZACIÓN DE VARIABLES ECOSISTEMA
         let estatusDeBanLocal = JSON.parse(localStorage.getItem("wasapedro_ban_status")) || null;
-        if (estatusDeBanLocal) {
-            mostrarPantallaBanAbsoluto(estatusDeBanLocal.tipo, estatusDeBanLocal.razon);
-        }
+        if (estatusDeBanLocal) { mostrarPantallaBanAbsoluto(estatusDeBanLocal.tipo, estatusDeBanLocal.razon); }
 
         let miNombre = localStorage.getItem("wasapedro_mqtt_name") || "";
         let miFotoB64 = localStorage.getItem("wasapedro_my_avatar") || "";
+        let miMarcoAvatar = localStorage.getItem("wasapedro_my_frame") || "frame-none";
+        let temaActual = localStorage.getItem("wasapedro_theme_color") || "#3a9cd6";
+        
         let clienteMqtt = null;
         let chatActivo = null;
         let instanciaCroppie = null; 
-        let destinoRecorte = "usuario"; // "usuario" o "grupo"
+        let destinoRecorte = "usuario"; 
         
         let listaAmigosActivos = JSON.parse(localStorage.getItem("wasapedro_amigos_list")) || [];
         let historialesDeChats = JSON.parse(localStorage.getItem("wasapedro_historiales")) || {};
@@ -336,943 +371,836 @@
         let listaBloqueados = JSON.parse(localStorage.getItem("wasapedro_bloqueados")) || [];
         let datosGrupos = JSON.parse(localStorage.getItem("wasapedro_datos_grupos")) || {}; 
         let fotosAmigos = JSON.parse(localStorage.getItem("wasapedro_fotos_amigos")) || {}; 
-        let ordenChats = JSON.parse(localStorage.getItem("wasapedro_orden_chats")) || []; 
-        let gmailVinculado = localStorage.getItem("wasapedro_gmail_link") || "";
+        let marcosAmigos = JSON.parse(localStorage.getItem("wasapedro_marcos_amigos")) || {};
+        let chatsArchivados Ocultos = JSON.parse(localStorage.getItem("wasapedro_chats_archivados")) || [];
         
-        let colaEnvios = JSON.parse(localStorage.getItem("wasapedro_cola_envios")) || [];
-        let reintentosMqttSeguidos = 0;
-        let registrosPresenciaAmigos = {}; 
-        let notificacionesPendientes = JSON.parse(localStorage.getItem("wasapedro_notif_pendientes")) || {};
-        let temaActual = localStorage.getItem("wasapedro_theme_color") || "#3a9cd6";
-
         let esAdmin = localStorage.getItem("wasapedro_is_admin") === "true";
-        let reportesRecibidos = JSON.parse(localStorage.getItem("wasapedro_reportes")) || [];
+        let listadoDescubiertoUsuarios = JSON.parse(localStorage.getItem("wasapedro_descubiertos")) || [];
         const CONTRASENA_ADMIN_MASTER = "wasapedro123";
-
         const URL_SERVIDOR_MESSENGER = 'wss://broker.emqx.io:8084/mqtt';
 
-        const clienteValidacion = mqtt.connect(URL_SERVIDOR_MESSENGER);
-        clienteValidacion.on('connect', () => {
-            if (miNombre) { clienteValidacion.subscribe(`wasapedro/v3/verificar/${miNombre}`); }
-        });
-        clienteValidacion.on('message', (topico, mensaje) => {
-            try {
-                const data = JSON.parse(mensaje.toString());
-                if (topico === `wasapedro/v3/verificar/${miNombre}` && data.accion === "pregunta") {
-                    clienteValidacion.publish(`wasapedro/v3/verificar/${miNombre}`, JSON.stringify({ accion: "respuesta_ocupado", foto: miFotoB64 }));
-                }
-            } catch(e) {}
+        // Inicialización de Stickers Preestablecidos
+        const STICKERS_PRESETS = ["🔥", "😎", "👾", "🤖", "🚀", "👑", "💡", "⚠️", "💯", "🎭", "🍕", "🐶"];
+
+        // CONFIGURACIÓN INICIAL AL CARGAR DOM
+        document.addEventListener("DOMContentLoaded", () => {
+            aplicarColorTemaUI(temaActual);
+            construirPanelStickers();
+            configurarDragAndDrop();
+            
+            if (miNombre) {
+                conectarBrokerCentral();
+                inicializarUI();
+            } else {
+                document.getElementById("pantalla-registro").classList.remove("hidden");
+            }
         });
 
-        function mostrarPantallaBanAbsoluto(tipo, razon) {
-            document.getElementById("pantalla-ban").classList.remove("hidden");
-            document.getElementById("pantalla-ban-tipo").textContent = tipo;
-            document.getElementById("pantalla-ban-razon").textContent = razon;
-            document.getElementById("interfaz-principal")?.classList.add("hidden");
-            document.getElementById("pantalla-registro")?.classList.add("hidden");
+        function aplicarColorTemaUI(hex) {
+            document.documentElement.style.setProperty('--accent-color', hex);
+            // Generar un hover aproximado reduciendo brillo de forma artificial
+            document.documentElement.style.setProperty('--accent-hover', hex + "cc");
+            document.getElementById("meta-theme").setAttribute("content", hex);
+            localStorage.setItem("wasapedro_theme_color", hex);
+        }
+
+        function cambiarTema(hex) {
+            aplicarColorTemaUI(hex);
+        }
+
+        function conectarBrokerCentral() {
+            actualizarPildoraConexion("conectando");
+            clienteMqtt = mqtt.connect(URL_SERVIDOR_MESSENGER, { clientId: 'wp_' + miNombre + '_' + Math.random().toString(16).substr(2, 5) });
+
+            clienteMqtt.on('connect', () => {
+                actualizarPildoraConexion("conectado");
+                
+                // Suscripción a canales unicast de entrada y broadcast global
+                clienteMqtt.subscribe(`wasapedro/v3/directo/${miNombre}`);
+                clienteMqtt.subscribe(`wasapedro/v3/global/presencia`);
+                clienteMqtt.subscribe(`wasapedro/v3/global/bans`);
+
+                // Suscribirse a grupos existentes
+                listaAmigosActivos.forEach(amigo => {
+                    if (datosGrupos[amigo]) {
+                        clienteMqtt.subscribe(`wasapedro/v3/grupo/${amigo}`);
+                    }
+                });
+
+                // Transmitir pulso de presencia inicial a la topología
+                publicarPresenciaGlobal();
+            });
+
+            clienteMqtt.on('close', () => actualizarPildoraConexion("desconectado"));
+            clienteMqtt.on('message', (topico, mensaje) => procesarPaqueteMqttEntrante(topico, mensaje.toString()));
+        }
+
+        function publicarPresenciaGlobal() {
+            if (!clienteMqtt) return;
+            clienteMqtt.publish(`wasapedro/v3/global/presencia`, JSON.stringify({
+                remitente: miNombre,
+                foto: miFotoB64,
+                marco: miMarcoAvatar,
+                timestamp: Date.now()
+            }));
+        }
+
+        function procesarPaqueteMqttEntrante(topico, payload) {
+            try {
+                const data = JSON.parse(payload);
+                
+                // Verificar interceptor de bloqueos globales
+                if (topico === `wasapedro/v3/global/bans`) {
+                    if (data.objetivo === miNombre) {
+                        localStorage.setItem("wasapedro_ban_status", JSON.stringify(data));
+                        mostrarPantallaBanAbsoluto(data.tipo, data.razon);
+                    }
+                    return;
+                }
+
+                // Registro implícito de descubrimiento de nodos
+                if (data.remitente && data.remitente !== miNombre) {
+                    if (!listadoDescubiertoUsuarios.includes(data.remitente)) {
+                        listadoDescubiertoUsuarios.push(data.remitente);
+                        localStorage.setItem("wasapedro_descubiertos", JSON.stringify(listadoDescubiertoUsuarios));
+                    }
+                    if (data.foto) fotosAmigos[data.remitente] = data.foto;
+                    if (data.marco) marcosAmigos[data.remitente] = data.marco;
+                }
+
+                if (topico === `wasapedro/v3/global/presencia`) {
+                    return; // Mapeado de descubrimiento completado
+                }
+
+                // Evaluar si proviene de un emisor restringido (Lista Negra)
+                if (listaBloqueados.includes(data.remitente)) return;
+
+                let canalOrigen = "";
+                if (topico.startsWith("wasapedro/v3/directo/")) {
+                    canalOrigen = data.remitente;
+                } else if (topico.startsWith("wasapedro/v3/grupo/")) {
+                    canalOrigen = topico.replace("wasapedro/v3/grupo/", "");
+                    if (data.remitente === miNombre) return; // Evitar eco local
+                }
+
+                if (!canalOrigen) return;
+
+                // Inyectar a lista si es nuevo canal detectado
+                if (!listaAmigosActivos.includes(canalOrigen)) {
+                    listaAmigosActivos.push(canalOrigen);
+                    localStorage.setItem("wasapedro_amigos_list", JSON.stringify(listaAmigosActivos));
+                }
+
+                // Guardar en estructura relacional de historial
+                if (!historialesDeChats[canalOrigen]) historialesDeChats[canalOrigen] = [];
+                historialesDeChats[canalOrigen].push(data);
+                localStorage.setItem("wasapedro_historiales", JSON.stringify(historialesDeChats));
+
+                // Si el chat está oculto, lo devolvemos a visibles al recibir mensaje
+                const idxOculto = chatsArchivadosOcultos.indexOf(canalOrigen);
+                if (idxOculto > -1) {
+                    chatsArchivadosOcultos.splice(idxOculto, 1);
+                    localStorage.setItem("wasapedro_chats_archivados", JSON.stringify(chatsArchivadosOcultos));
+                }
+
+                // Renderizado reactivo o alerta flash
+                if (chatActivo === canalOrigen) {
+                    inyectarMensajeEnContenedor(data);
+                    marcarMensajesLeidos(canalOrigen);
+                } else {
+                    registrarNotificacionPendiente(canalOrigen, data);
+                }
+                actualizarListaAmigosUI();
+
+            } catch (e) { console.error("Error parsing packet", e); }
+        }
+
+        // LÓGICA DE REGISTRO E INTERFAZ
+        function procesarRegistroInicial() {
+            const nick = document.getElementById("input-nombre").value.trim().replace(/[^a-zA-Z0-9_]/g, "");
+            if (nick.length < 3) return;
+            
+            miNombre = nick;
+            localStorage.setItem("wasapedro_mqtt_name", miNombre);
+            const mail = document.getElementById("input-recuperar-email").value.trim();
+            if (mail) localStorage.setItem("wasapedro_gmail_link", mail);
+
+            conectarBrokerCentral();
+            inicializarUI();
+        }
+
+        function inicializarUI() {
+            document.getElementById("pantalla-registro").classList.add("hidden");
+            const mainApp = document.getElementById("interfaz-principal");
+            mainApp.classList.remove("hidden");
+            mainApp.classList.add("flex");
+
+            document.getElementById("nombre-usuario-pantalla").textContent = miNombre;
+            document.getElementById("config-nombre-usuario").textContent = miNombre;
+            
+            actualizarAvatarPropioUI();
+            actualizarListaAmigosUI();
+            if (esAdmin) document.getElementById("btn-usuarios-admin-view").classList.remove("hidden");
+        }
+
+        function actualizarAvatarPropioUI() {
+            const imgEl = document.getElementById("avatar-usuario-img");
+            const txtEl = document.getElementById("avatar-usuario-txt");
+            const prevImg = document.getElementById("preview-config-avatar");
+            const prevTxt = document.getElementById("preview-config-txt");
+
+            // Aplicar clases de marcos dinámicos
+            [imgEl, prevImg].forEach(el => {
+                el.className = `w-10 h-10 rounded-full object-cover hidden ${miMarcoAvatar}`;
+            });
+            prevImg.className = `w-14 h-14 rounded-full object-cover bg-slate-800 hidden ${miMarcoAvatar}`;
+
+            if (miFotoB64) {
+                imgEl.src = miFotoB64;
+                imgEl.classList.remove("hidden");
+                prevImg.src = miFotoB64;
+                prevImg.classList.remove("hidden");
+                txtEl.classList.add("hidden");
+                prevTxt.classList.add("hidden");
+            } else {
+                imgEl.classList.add("hidden");
+                prevImg.classList.add("hidden");
+                txtEl.textContent = miNombre.substr(0, 2).toUpperCase();
+                txtEl.classList.remove("hidden");
+                prevTxt.textContent = miNombre.substr(0, 2).toUpperCase();
+                prevTxt.classList.remove("hidden");
+            }
+        }
+
+        // CONTROL DE RECIENTES Y CANALES
+        function actualizarListaAmigosUI() {
+            const contenedor = document.getElementById("contenedor-lista-dinamica");
+            contenedor.innerHTML = "";
+            
+            // Filtrar canales que el usuario decidió ocultar/archivar de la barra
+            const canalesVisibles = listaAmigosActivos.filter(c => !chatsArchivadosOcultos.includes(c));
+
+            if (canalesVisibles.length === 0) {
+                contenedor.innerHTML = `<p class="text-slate-600 text-[11px] italic p-3 text-center">No hay canales de comunicación abiertos.</p>`;
+                return;
+            }
+
+            canalesVisibles.forEach(idCanal => {
+                const esGrupo = !!datosGrupos[idCanal];
+                const apodo = apodosContactos[idCanal] || idCanal;
+                const foto = fotosAmigos[idCanal] || "";
+                const marco = marcosAmigos[idCanal] || "frame-none";
+                const unread = countUnread(idCanal);
+
+                const item = document.createElement("div");
+                item.className = `flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-all ${chatActivo === idCanal ? 'bg-slate-800 border border-slate-700/60' : 'hover:bg-[#1e293b]/40 border border-transparent'}`;
+                item.onclick = () => abrirChatCon(idCanal);
+
+                let avatarHTML = esGrupo 
+                    ? `<div class="w-9 h-9 bg-indigo-950 text-indigo-400 font-bold rounded-xl flex items-center justify-center border border-indigo-800"><i class="ph ph-users-three-bold"></i></div>`
+                    : (foto 
+                        ? `<img src="${foto}" class="w-9 h-9 rounded-full object-cover ${marco}">`
+                        : `<div class="w-9 h-9 bg-[#1e293b] text-slate-400 font-bold rounded-full flex items-center justify-center text-xs border border-slate-700">${idCanal.substr(0,2).toUpperCase()}</div>`
+                    );
+
+                item.innerHTML = `
+                    <div class="relative">${avatarHTML}</div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold text-xs text-slate-200 truncate ${esGrupo ? 'text-indigo-300':''}">${apodo}</span>
+                            ${unread > 0 ? `<span class="bg-[#3a9cd6] theme-bg text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold animate-pulse">${unread}</span>` : ''}
+                        </div>
+                        <p class="text-[10px] text-slate-500 truncate mt-0.5">${esGrupo ? 'Canal Multicast' : 'Nodo Directo'}</p>
+                    </div>
+                `;
+                contenedor.appendChild(item);
+            });
+        }
+
+        function buscarAmigo() {
+            const objetivo = document.getElementById("input-buscar").value.trim();
+            if (!objetivo || objetivo === miNombre) return;
+
+            if (!listaAmigosActivos.includes(objetivo)) {
+                listaAmigosActivos.push(objetivo);
+                localStorage.setItem("wasapedro_amigos_list", JSON.stringify(listaAmigosActivos));
+            }
+            // Asegurar visibilidad por si estaba archivado
+            const idx = chatsArchivadosOcultos.indexOf(objetivo);
+            if (idx > -1) { chatsArchivadosOcultos.splice(idx, 1); localStorage.setItem("wasapedro_chats_archivados", JSON.stringify(chatsArchivadosOcultos)); }
+
+            document.getElementById("input-buscar").value = "";
+            abrirChatCon(objetivo);
+        }
+
+        function abrirChatCon(idCanal) {
+            chatActivo = idCanal;
+            marcarMensajesLeidos(idCanal);
+            
+            document.getElementById("pantalla-chat-vacia").classList.add("hidden");
+            const panelActivo = document.getElementById("pantalla-chat-activa");
+            panelActivo.classList.remove("hidden");
+            panelActivo.classList.add("flex");
+
+            const esGrupo = !!datosGrupos[idCanal];
+            const apodo = apodosContactos[idCanal] || idCanal;
+            
+            document.getElementById("nombre-chat-amigo").textContent = apodo;
+            document.getElementById("nombre-chat-amigo").className = `font-bold text-sm block ${esGrupo ? 'text-indigo-300' : 'text-white'}`;
+            
+            const subInfo = document.getElementById("sub-chat-info");
+            subInfo.classList.remove("hidden");
+            subInfo.textContent = esGrupo ? `ID: ${idCanal} | Administrador Local` : `Canal Unicast P2P`;
+
+            // Menu contextual condicional
+            document.getElementById("btn-menu-foto-grupo").style.display = esGrupo ? "flex" : "none";
+            document.getElementById("btn-menu-agregar-grupo").style.display = esGrupo ? "flex" : "none";
+            document.getElementById("btn-menu-bloquear").style.display = esGrupo ? "none" : "flex";
+
+            // Avatar Cabecera Chat
+            const cImg = document.getElementById("avatar-chat-img");
+            const cTxt = document.getElementById("avatar-chat-txt");
+            if (!esGrupo && fotosAmigos[idCanal]) {
+                cImg.src = fotosAmigos[idCanal];
+                cImg.className = `w-9 h-9 rounded-full object-cover block ${marcosAmigos[idCanal] || 'frame-none'}`;
+                cTxt.classList.add("hidden");
+            } else {
+                cImg.classList.add("hidden");
+                cTxt.textContent = idCanal.substr(0,2).toUpperCase();
+                cTxt.className = `w-9 h-9 font-bold rounded-full flex items-center justify-center text-xs border block ${esGrupo ? 'bg-indigo-950 text-indigo-400 border-indigo-800' : 'bg-[#1e293b] text-sky-400 border-slate-700'}`;
+            }
+
+            actualizarListaAmigosUI();
+            cargarHistorialMensajesUI();
+        }
+
+        // PANEL DE STICKERS Y MULTIMEDIA EN CHAT
+        function construirPanelStickers() {
+            const grid = document.getElementById("grid-stickers-dinamicos");
+            grid.innerHTML = "";
+            STICKERS_PRESETS.forEach(stk => {
+                const btn = document.createElement("button");
+                btn.className = "hover:scale-125 transition-all p-1 text-center select-none active:scale-95";
+                btn.textContent = stk;
+                btn.onclick = () => enviarSticker(stk);
+                grid.appendChild(btn);
+            });
+        }
+
+        function togglePanelStickers() {
+            const panel = document.getElementById("panel-stickers");
+            panel.classList.toggle("hidden");
+        }
+
+        function enviarSticker(emoji) {
+            togglePanelStickers();
+            transmitirPaqueteFormateado({ tipo: "sticker", contenido: emoji });
+        }
+
+        function transmitirPaqueteFormateado(paquete) {
+            if (!chatActivo || !clienteMqtt) return;
+
+            const esGrupo = !!datosGrupos[chatActivo];
+            const payloadCompleto = {
+                ...paquete,
+                remitente: miNombre,
+                timestamp: Date.now()
+            };
+
+            const topicoDestino = esGrupo ? `wasapedro/v3/grupo/${chatActivo}` : `wasapedro/v3/directo/${chatActivo}`;
+            clienteMqtt.publish(topicoDestino, JSON.stringify(payloadCompleto));
+
+            // Inyección en historial propio instantánea
+            if (!historialesDeChats[chatActivo]) historialesDeChats[chatActivo] = [];
+            historialesDeChats[chatActivo].push(payloadCompleto);
+            localStorage.setItem("wasapedro_historiales", JSON.stringify(historialesDeChats));
+
+            inyectarMensajeEnContenedor(payloadCompleto);
+        }
+
+        function enviarMensajeTexto() {
+            const input = document.getElementById("input-mensaje");
+            const txt = input.value.trim();
+            if (!txt) return;
+
+            transmitirPaqueteFormateado({ tipo: "texto", contenido: txt });
+            input.value = "";
+            input.focus();
+        }
+
+        function procesarArchivoAdjunto(file, flag) {
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) {
+                alert("Restricción de Canal: Archivos limitados a un peso máximo de 2MB para evitar saturación de trama.");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const rawData = e.target.result;
+                if (flag === 'image' || file.type.startsWith("image/")) {
+                    transmitirPaqueteFormateado({ tipo: "foto", contenido: rawData, metadata: file.name });
+                } else {
+                    transmitirPaqueteFormateado({ tipo: "archivo", contenido: rawData, metadata: file.name });
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // ASIGNACIÓN DE ARRAYS PARA RENDERIZAR CHAT
+        function cargarHistorialMensajesUI() {
+            const contenedor = document.getElementById("contenedor-mensajes");
+            contenedor.innerHTML = "";
+            const mensajes = historialesDeChats[chatActivo] || [];
+
+            if (mensajes.length === 0) {
+                contenedor.innerHTML = `<p class="text-slate-600 text-[11px] italic text-center py-8">Canal seguro limpio. Ningún paquete transmitido aún.</p>`;
+                return;
+            }
+
+            mensajes.forEach(msg => inyectarMensajeEnContenedor(msg));
+        }
+
+        function inyectarMensajeEnContenedor(msg) {
+            const contenedor = document.getElementById("contenedor-mensajes");
+            
+            // Eliminar texto informativo de canal limpio si existe
+            if (contenedor.querySelector("p.text-slate-600")) { contenedor.innerHTML = ""; }
+
+            const esPropio = msg.remitente === miNombre;
+            const bloque = document.createElement("div");
+            bloque.className = `flex flex-col w-full ${esPropio ? 'items-end' : 'items-start'} mensaje-pop`;
+
+            let estructuraInterna = "";
+            const hora = new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+            if (msg.tipo === "texto") {
+                estructuraInterna = `<p class="text-xs break-all leading-relaxed">${escapeHTML(msg.contenido)}</p>`;
+            } else if (msg.tipo === "sticker") {
+                estructuraInterna = `<div class="text-5xl py-1 select-none animate-bounce">${msg.contenido}</div>`;
+            } else if (msg.tipo === "foto") {
+                estructuraInterna = `
+                    <div class="rounded-lg overflow-hidden border border-slate-700 max-w-xs bg-black/20">
+                        <img src="${msg.contenido}" class="w-full h-auto block cursor-pointer hover:opacity-90 max-h-64 object-contain" onclick="window.open('${msg.contenido}')">
+                        <span class="text-[9px] text-slate-400 p-1 block truncate bg-slate-900/40">${escapeHTML(msg.metadata || 'Captura')}</span>
+                    </div>
+                `;
+            } else if (msg.tipo === "archivo") {
+                estructuraInterna = `
+                    <a href="${msg.contenido}" download="${msg.metadata || 'archivo.bin'}" class="flex items-center gap-2 p-2 bg-slate-900/60 rounded-lg hover:bg-slate-900 border border-slate-700 max-w-xs transition-all">
+                        <i class="ph ph-file-arrow-down text-2xl text-sky-400"></i>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs font-semibold text-slate-200 truncate">${escapeHTML(msg.metadata || 'Descargar Binario')}</p>
+                            <p class="text-[9px] text-slate-500 uppercase tracking-widest font-bold">Descargar</p>
+                        </div>
+                    </a>
+                `;
+            }
+
+            const bubbleClass = msg.tipo === 'sticker' 
+                ? 'bg-transparent shadow-none p-0' 
+                : (esPropio ? 'bg-[#3a9cd6] theme-bg text-white rounded-2xl rounded-tr-none shadow-md' : 'bg-[#1e293b] text-slate-100 rounded-2xl rounded-tl-none border border-slate-800');
+
+            bloque.innerHTML = `
+                <span class="text-[9px] font-bold text-slate-500 mb-0.5 px-1">${esPropio ? 'Tú' : escapeHTML(msg.remitente)}</span>
+                <div class="max-w-[75%] p-3 ${bubbleClass}">
+                    ${estructuraInterna}
+                    <span class="text-[8px] text-right block mt-1 ${esPropio ? 'text-sky-100' : 'text-slate-500'} font-medium">${hora}</span>
+                </div>
+            `;
+
+            contenedor.appendChild(bloque);
+            contenedor.scrollTop = contenedor.scrollHeight;
+        }
+
+        // INTERACCIONES DRAG & DROP
+        function configurarDragAndDrop() {
+            const zona = document.getElementById("pantalla-chat-activa");
+            const visual = document.getElementById("zona-drop-visual");
+
+            window.addEventListener("dragover", (e) => e.preventDefault());
+            window.addEventListener("drop", (e) => e.preventDefault());
+
+            zona.addEventListener("dragenter", (e) => {
+                e.preventDefault();
+                visual.style.opacity = "1";
+            });
+            visual.addEventListener("dragleave", () => {
+                visual.style.opacity = "0";
+            });
+            visual.addEventListener("drop", (e) => {
+                e.preventDefault();
+                visual.style.opacity = "0";
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    procesarArchivoAdjunto(e.dataTransfer.files[0], 'file');
+                }
+            });
+        }
+
+        // MENUS CONTEXTUALES Y CARACTERÍSTICAS SOLICITADAS
+        function toggleMenuOpcionesChat() {
+            document.getElementById("menu-opciones-chat").classList.toggle("hidden");
+        }
+
+        function menuPonerApodo() {
+            toggleMenuOpcionesChat();
+            if (!chatActivo) return;
+            const actual = apodosContactos[chatActivo] || chatActivo;
+            const nuevo = prompt(`Asignar alias de visualización local para [ ${chatActivo} ] :`, actual);
+            if (nuevo === null) return;
+            
+            if (nuevo.trim()) {
+                apodosContactos[chatActivo] = nuevo.trim();
+            } else {
+                delete apodosContactos[chatActivo];
+            }
+            localStorage.setItem("wasapedro_apodos", JSON.stringify(apodosContactos));
+            abrirChatCon(chatActivo);
+        }
+
+        function menuArchivarOcultarChat() {
+            toggleMenuOpcionesChat();
+            if (!chatActivo) return;
+            
+            if (!chatsArchivadosOcultos.includes(chatActivo)) {
+                chatsArchivadosOcultos.push(chatActivo);
+                localStorage.setItem("wasapedro_chats_archivados", JSON.stringify(chatsArchivadosOcultos));
+            }
+            
+            chatActivo = null;
+            document.getElementById("pantalla-chat-activa").classList.add("hidden");
+            document.getElementById("pantalla-chat-vacia").classList.remove("hidden");
+            actualizarListaAmigosUI();
+        }
+
+        function menuBorrarChat() {
+            toggleMenuOpcionesChat();
+            if (!chatActivo) return;
+            if (!confirm("¿Proceder con la purga irreversible de este canal en tu almacenamiento local?")) return;
+
+            delete historialesDeChats[chatActivo];
+            localStorage.setItem("wasapedro_historiales", JSON.stringify(historialesDeChats));
+            cargarHistorialMensajesUI();
+        }
+
+        function menuBloquearContacto() {
+            toggleMenuOpcionesChat();
+            if (!chatActivo) return;
+            if (!confirm(`¿Restringir el canal con ${chatActivo}? No recibirás más paquetes de su parte.`)) return;
+
+            if (!listaBloqueados.includes(chatActivo)) {
+                listaBloqueados.push(chatActivo);
+                localStorage.setItem("wasapedro_bloqueados", JSON.stringify(listaBloqueados));
+            }
+            menuArchivarOcultarChat();
+        }
+
+        // TRATAMIENTO DE PERFIL / CROPPIE
+        function abrirModalConfiguracion() {
+            document.getElementById("modal-config").classList.remove("hidden");
+            actualizarListaBloqueadosUI();
+        }
+
+        function iniciarProcesoRecorte(file) {
+            if (!file) return;
+            destinoRecorte = "usuario";
+            document.getElementById("modal-crop").classList.remove("hidden");
+
+            if (instanciaCroppie) instanciaCroppie.destroy();
+            instanciaCroppie = new Croppie(document.getElementById("contenedor-croppie"), {
+                viewport: { width: 160, height: 160, type: 'circle' },
+                boundary: { width: 260, height: 260 },
+                showZoomer: true
+            });
+
+            const reader = new FileReader();
+            reader.onload = (e) => instanciaCroppie.bind({ url: e.target.result });
+            reader.readAsDataURL(file);
+        }
+
+        function seleccionarMarcoAvatar(claseMarco) {
+            miMarcoAvatar = claseMarco;
+        }
+
+        function finalizarRecorte() {
+            if (!instanciaCroppie) return;
+            instanciaCroppie.result({ type: 'base64', size: { width: 250, height: 250 }, quality: 0.85 }).then(base64 => {
+                if (destinoRecorte === "usuario") {
+                    miFotoB64 = base64;
+                    localStorage.setItem("wasapedro_my_avatar", miFotoB64);
+                    localStorage.setItem("wasapedro_my_frame", miMarcoAvatar);
+                    actualizarAvatarPropioUI();
+                    publicarPresenciaGlobal();
+                } else if (destinoRecorte === "grupo" && chatActivo) {
+                    fotosAmigos[chatActivo] = base64;
+                    localStorage.setItem("wasapedro_fotos_amigos", JSON.stringify(fotosAmigos));
+                    abrirChatCon(chatActivo);
+                }
+                document.getElementById("modal-crop").classList.add("hidden");
+            });
+        }
+
+        function cancelarRecorte() {
+            document.getElementById("modal-crop").classList.add("hidden");
+            if (instanciaCroppie) instanciaCroppie.destroy();
+        }
+
+        function iniciarCambioFotoGrupo() {
+            toggleMenuOpcionesChat();
+            if (!chatActivo) return;
+            destinoRecorte = "grupo";
+            
+            const m = document.createElement("input");
+            m.type = "file";
+            m.accept = "image/*";
+            m.onchange = function() {
+                if (!m.files[0]) return;
+                document.getElementById("modal-crop").classList.remove("hidden");
+                if (instanciaCroppie) instanciaCroppie.destroy();
+                instanciaCroppie = new Croppie(document.getElementById("contenedor-croppie"), {
+                    viewport: { width: 160, height: 160, type: 'square' },
+                    boundary: { width: 260, height: 260 },
+                    showZoomer: true
+                });
+                const r = new FileReader();
+                r.onload = (e) => instanciaCroppie.bind({ url: e.target.result });
+                r.readAsDataURL(m.files[0]);
+            };
+            m.click();
+        }
+
+        // ESPACIOS GRUPALES
+        function abrirModalGrupo() { document.getElementById("modal-grupo").classList.remove("hidden"); }
+        function cerrarModalGrupo() { document.getElementById("modal-grupo").classList.add("hidden"); }
+        
+        function procesarCrearGrupo() {
+            const nom = document.getElementById("input-nombre-grupo").value.trim();
+            if (!nom) return;
+            const idG = "grp_" + Math.random().toString(36).substr(2, 6);
+            
+            datosGrupos[idG] = { creador: miNombre, nombre: nom };
+            localStorage.setItem("wasapedro_datos_grupos", JSON.stringify(datosGrupos));
+
+            apodosContactos[idG] = nom;
+            localStorage.setItem("wasapedro_apodos", JSON.stringify(apodosContactos));
+
+            if (!listaAmigosActivos.includes(idG)) {
+                listaAmigosActivos.push(idG);
+                localStorage.setItem("wasapedro_amigos_list", JSON.stringify(listaAmigosActivos));
+            }
+
+            if (clienteMqtt) clienteMqtt.subscribe(`wasapedro/v3/grupo/${idG}`);
+            cerrarModalGrupo();
+            document.getElementById("input-nombre-grupo").value = "";
+            abrirChatCon(idG);
+        }
+
+        function abrirModalAgregarMiembros() {
+            if (!chatActivo || !datosGrupos[chatActivo]) return;
+            document.getElementById("modal-agregar-miembros").classList.remove("hidden");
+            const box = document.getElementById("lista-contactos-para-grupo");
+            box.innerHTML = "";
+
+            const potenciales = listadoDescubiertoUsuarios.filter(u => u !== miNombre);
+            if (potenciales.length === 0) {
+                box.innerHTML = `<p class="text-[11px] italic text-slate-500 text-center py-2">No hay otros nodos interceptados en la topología local.</p>`;
+                return;
+            }
+
+            potenciales.forEach(usr => {
+                const row = document.createElement("div");
+                row.className = "flex justify-between items-center bg-slate-900/60 p-2 rounded-lg border border-slate-800 text-xs";
+                row.innerHTML = `
+                    <span class="font-medium text-slate-300">${usr}</span>
+                    <button onclick="forzarInyeccionMiembroMqtt('${usr}')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] px-2 py-1 rounded">Vincular</button>
+                `;
+                box.appendChild(row);
+            });
+        }
+
+        function forzarInyeccionMiembroMqtt(usuario) {
+            if (!chatActivo) return;
+            // Envía paquete directo avisándole al usuario que se una al canal de escucha del grupo
+            clienteMqtt.publish(`wasapedro/v3/directo/${usuario}`, JSON.stringify({
+                remitente: miNombre,
+                tipo: "texto",
+                contenido: `[SYSTEM] Te he vinculado a la sala multicast con ID: ${chatActivo}. Inicializa tu escucha en este id.`,
+                timestamp: Date.now()
+            }));
+            alert(`Solicitud de sincronización enviada a ${usuario}`);
+        }
+
+        // CONSOLA CON FUNCIÓN "MENSAJE" PEDIDA
+        function abrirModalAdminLogin() { document.getElementById("modal-admin-login").classList.remove("hidden"); }
+        
+        function verificarAdmin() {
+            const pass = document.getElementById("input-admin-pass").value;
+            if (pass === CONTRASENA_ADMIN_MASTER) {
+                esAdmin = true;
+                localStorage.setItem("wasapedro_is_admin", "true");
+                document.getElementById("modal-admin-login").classList.add("hidden");
+                document.getElementById("btn-usuarios-admin-view").classList.remove("hidden");
+                alert("Nivel de privilegios Root: Concedido.");
+            } else {
+                alert("Firma criptográfica inválida. Acceso denegado.");
+            }
+            document.getElementById("input-admin-pass").value = "";
+        }
+
+        function abrirModalUsuariosAdmin() {
+            document.getElementById("modal-admin-usuarios").classList.remove("hidden");
+            const box = document.getElementById("lista-usuarios-global-contenedor");
+            box.innerHTML = "";
+
+            if (listadoDescubiertoUsuarios.length === 0) {
+                box.innerHTML = `<p class="text-xs text-slate-500 italic text-center p-4">Descubrimiento pasivo vacío. Sin registros.</p>`;
+                return;
+            }
+
+            listadoDescubiertoUsuarios.forEach(usr => {
+                const div = document.createElement("div");
+                div.className = "bg-slate-900 border border-slate-800/80 p-3 rounded-xl flex items-center justify-between text-xs transition-all hover:border-slate-700";
+                div.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <div class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></div>
+                        <span class="font-bold text-slate-200 text-sm">${usr}</span>
+                        ${usr === miNombre ? '<span class="text-[9px] bg-slate-800 text-slate-400 px-1 rounded">Tú</span>':''}
+                    </div>
+                    <div class="flex gap-1.5">
+                        <button onclick="adminIniciarChatDirecto('${usr}')" class="bg-sky-600/20 text-sky-400 border border-sky-500/30 font-bold px-2.5 py-1 rounded-lg hover:bg-sky-500 hover:text-white transition-all text-[11px] flex items-center gap-1">
+                           <i class="ph ph-chat-circle-text"></i> Mensaje
+                        </button>
+                        <button onclick="forzarSancionAdmin('${usr}', 'Baneo Temporal')" class="bg-amber-600/20 text-amber-400 border border-amber-500/30 px-2 py-1 rounded-lg text-[10px] hover:bg-amber-600 hover:text-white">Ban</button>
+                        <button onclick="forzarSancionAdmin('${usr}', 'Veto Absoluto')" class="bg-red-600/20 text-red-400 border border-red-500/30 px-2 py-1 rounded-lg text-[10px] hover:bg-red-600 hover:text-white">Permaban</button>
+                    </div>
+                `;
+                box.appendChild(div);
+            });
+        }
+
+        function adminIniciarChatDirecto(usuario) {
+            // Cierra todos los modales administrativos intermedios
+            document.getElementById("modal-admin-usuarios").classList.add("hidden");
+            document.getElementById("modal-config").classList.add("hidden");
+            
+            // Forzar inyección en la barra lateral activa de amigos si no existe
+            if (!listaAmigosActivos.includes(usuario)) {
+                listaAmigosActivos.push(usuario);
+                localStorage.setItem("wasapedro_amigos_list", JSON.stringify(listaAmigosActivos));
+            }
+            
+            // Quitar de ocultos si estuviese archivado
+            const idx = chatsArchivadosOcultos.indexOf(usuario);
+            if (idx > -1) {
+                chatsArchivadosOcultos.splice(idx, 1);
+                localStorage.setItem("wasapedro_chats_archivados", JSON.stringify(chatsArchivadosOcultos));
+            }
+
+            // Desplegar e inicializar la interfaz de comunicación de forma fluida
+            abrirChatCon(usuario);
+        }
+
+        function forzarSancionAdmin(usuario, tipoStr) {
+            if (usuario === miNombre) return alert("Error de consistencia: Autoveto denegado.");
+            const razon = prompt(`Especificar razón de la sanción para [${usuario}]:`, "Incumplimiento de términos.");
+            if (!razon) return;
+
+            if (clienteMqtt) {
+                clienteMqtt.publish(`wasapedro/v3/global/bans`, JSON.stringify({
+                    objetivo: usuario,
+                    tipo: tipoStr,
+                    razon: razon,
+                    autor: miNombre
+                }));
+                alert(`Orden de transmisión ejecutada con éxito para inyectar ban a: ${usuario}`);
+            }
+        }
+
+        // AUXILIARES Y GESTORES DE ESTADO
+        function actualizarListaBloqueadosUI() {
+            const container = document.getElementById("contenedor-bloqueados");
+            container.innerHTML = "";
+            if (listaBloqueados.length === 0) {
+                container.innerHTML = `<p class="italic text-slate-600 text-[11px]">Ningún canal restringido.</p>`;
+                return;
+            }
+            listaBloqueados.forEach(b => {
+                const div = document.createElement("div");
+                div.className = "flex justify-between items-center bg-slate-900/50 p-2 rounded-lg border border-slate-800";
+                div.innerHTML = `
+                    <span class="text-xs text-slate-300 font-medium">${b}</span>
+                    <button onclick="removerBloqueo('${b}')" class="text-rose-400 font-bold hover:underline text-[10px]">Quitar</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function removerBloqueo(usr) {
+            listaBloqueados = listaBloqueados.filter(u => u !== usr);
+            localStorage.setItem("wasapedro_bloqueados", JSON.stringify(listaBloqueados));
+            actualizarListaBloqueadosUI();
+        }
+
+        function registrarNotificacionPendiente(idCanal, data) {
+            if (!notificacionesPendientes[idCanal]) notificacionesPendientes[idCanal] = 0;
+            notificacionesPendientes[idCanal]++;
+            localStorage.setItem("wasapedro_notif_pendientes", JSON.stringify(notificacionesPendientes));
+            
+            const nBox = document.getElementById("lista-notificaciones");
+            if (nBox.querySelector("p.italic")) nBox.innerHTML = "";
+            
+            let idAviso = `notif_flash_${idCanal}`;
+            let elExistente = document.getElementById(idAviso);
+            if (elExistente) elExistente.remove();
+
+            const p = document.createElement("p");
+            p.id = idAviso;
+            p.className = "bg-sky-950/40 text-sky-400 border border-sky-900/40 p-1.5 rounded mb-1 text-[11px] truncate flex justify-between items-center animate-pulse";
+            p.innerHTML = `
+                <span><strong>${idCanal}:</strong> Paquete entrante...</span>
+                <button onclick="abrirChatCon('${idCanal}'); this.parentElement.remove();" class="underline font-bold text-[10px] ml-1 text-white">Ver</button>
+            `;
+            nBox.appendChild(p);
+        }
+
+        function countUnread(idCanal) { return notificacionesPendientes[idCanal] || 0; }
+        
+        function marcarMensajesLeidos(idCanal) {
+            if (notificacionesPendientes[idCanal]) {
+                delete notificacionesPendientes[idCanal];
+                localStorage.setItem("wasapedro_notif_pendientes", JSON.stringify(notificacionesPendientes));
+                const el = document.getElementById(`notif_flash_${idCanal}`);
+                if (el) el.remove();
+                if (Object.keys(notificacionesPendientes).length === 0) {
+                    document.getElementById("lista-notificaciones").innerHTML = `<p class="italic text-slate-600 text-[11px]">Canales estables. Sin alertas en espera.</p>`;
+                }
+            }
         }
 
         function actualizarPildoraConexion(estado) {
             const ind = document.getElementById("indicador-conexion");
             if (!ind) return;
             if (estado === "conectado") {
-                ind.className = "text-[10px] font-medium text-green-400 flex items-center gap-1";
-                ind.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span> Conectado';
+                ind.className = "text-[10px] font-semibold text-green-400 flex items-center gap-1";
+                ind.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span> Nodo Sincronizado';
             } else if (estado === "conectando") {
-                ind.className = "text-[10px] font-medium text-yellow-500 flex items-center gap-1";
-                ind.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-yellow-500 inline-block animate-pulse"></span> Conectando...';
+                ind.className = "text-[10px] font-semibold text-yellow-500 flex items-center gap-1";
+                ind.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-yellow-500 inline-block animate-pulse"></span> Buscando Red...';
             } else {
-                ind.className = "text-[10px] font-medium text-red-400 flex items-center gap-1";
-                ind.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-red-500 inline-block"></span> Desconectado';
+                ind.className = "text-[10px] font-semibold text-red-400 flex items-center gap-1";
+                ind.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-red-500 inline-block"></span> Nodo Offline';
             }
         }
 
-        function inicializarUI() {
-            const pantallaRegistro = document.getElementById("pantalla-registro");
-            const interfazPrincipal = document.getElementById("interfaz-principal");
-
-            if (miNombre) {
-                pantallaRegistro.classList.add("hidden");
-                interfazPrincipal.classList.remove("hidden");
-                interfazPrincipal.classList.add("flex");
-                
-                document.getElementById("nombre-usuario-pantalla").textContent = miNombre;
-                document.getElementById("config-nombre-usuario").textContent = miNombre;
-                document.getElementById("input-cuenta-gmail").value = gmailVinculado;
-                
-                if(esAdmin) {
-                    document.getElementById("btn-usuarios-admin-view").classList.remove("hidden");
-                }
-
-                renderizarMisAvatars();
-                actualizarListaBloqueadosUI();
-                actualizarBuzonNotificacionesUI();
-                aplicarColorTema(temaActual);
-                conectarServidorCloud();
-                inicializarEventosArrastrarArchivos();
-            } else {
-                interfazPrincipal.classList.add("hidden");
-                pantallaRegistro.classList.remove("hidden");
-            }
-        }
-
-        function renderizarMisAvatars() {
-            const txtAvatar = document.getElementById("avatar-usuario-txt");
-            const imgAvatar = document.getElementById("avatar-usuario-img");
-            const configTxt = document.getElementById("preview-config-txt");
-            const configImg = document.getElementById("preview-config-avatar");
-
-            if (miFotoB64) {
-                txtAvatar.classList.add("hidden"); 
-                configTxt.classList.add("hidden"); 
-                imgAvatar.src = miFotoB64; 
-                imgAvatar.classList.remove("hidden");
-                configImg.src = miFotoB64; 
-                configImg.classList.remove("hidden");
-            } else {
-                imgAvatar.classList.add("hidden"); 
-                configImg.classList.add("hidden"); 
-                txtAvatar.textContent = miNombre.charAt(0).toUpperCase(); 
-                txtAvatar.classList.remove("hidden");
-                txtAvatar.classList.add("flex");
-                configTxt.textContent = miNombre.charAt(0).toUpperCase(); 
-                configTxt.classList.remove("hidden");
-                configTxt.classList.add("flex");
-            }
-        }
-
-        function abrirModalConfiguracion() {
-            if(esAdmin) {
-                document.getElementById("btn-usuarios-admin-view").classList.remove("hidden");
-            }
-            document.getElementById('modal-config').classList.remove('hidden');
-        }
-
-        function iniciarProcesoRecorte(archivo) {
-            if (!archivo) return;
-            if (!archivo.type.match('image.*')) return alert("Imagen no válida.");
-            document.getElementById("modal-crop").classList.remove("hidden");
-            if (instanciaCroppie) instanciaCroppie.destroy();
-            instanciaCroppie = new Croppie(document.getElementById("contenedor-croppie"), {
-                viewport: { width: 180, height: 180, type: 'circle' },
-                boundary: { width: 280, height: 280 },
-                showZoomer: true
-            });
-            const lector = new FileReader();
-            lector.onload = function(e) { instanciaCroppie.bind({ url: e.target.result }); };
-            lector.readAsDataURL(archivo);
-        }
-        function cancelarRecorte() {
-            if (instanciaCroppie) instanciaCroppie.destroy();
-            document.getElementById("modal-crop").classList.add("hidden");
-        }
-        function finalizarRecorte() {
-            if (!instanciaCroppie) return;
-            instanciaCroppie.result({ type: 'canvas', size: { width: 200, height: 200 }, format: 'jpeg' }).then(function(base64Recortada) {
-                if (destinoRecorte === "usuario") {
-                    miFotoB64 = base64Recortada;
-                    localStorage.setItem("wasapedro_my_avatar", miFotoB64);
-                    renderizarMisAvatars();
-                    if (clienteMqtt && clienteMqtt.connected) {
-                        clienteMqtt.publish(`wasapedro/v3/status/fotos`, JSON.stringify({ usuario: miNombre, foto: miFotoB64 }), { retain: true });
-                        clienteMqtt.publish(`wasapedro/v3/registry/announce`, JSON.stringify({ usuario: miNombre, foto: miFotoB64 }), { retain: true });
-                    }
-                } else if (destinoRecorte === "grupo") {
-                    if (chatActivo && datosGrupos[chatActivo]) {
-                        datosGrupos[chatActivo].foto = base64Recortada;
-                        localStorage.setItem("wasapedro_datos_grupos", JSON.stringify(datosGrupos));
-                        if (clienteMqtt && clienteMqtt.connected) {
-                            clienteMqtt.publish(`wasapedro/v3/grupo/${chatActivo}`, JSON.stringify({
-                                idMsg: "sys_" + Date.now(),
-                                emisor: miNombre,
-                                texto: "📸 El administrador cambió la foto de perfil del grupo.",
-                                fotoGrupoNueva: base64Recortada,
-                                esCambioFoto: true,
-                                timestamp: Date.now()
-                            }), { qos: 1 });
-                        }
-                        renderizarFotoCabeceraChat(chatActivo);
-                        actualizarListaAmigosUI();
-                    }
-                }
-                cancelarRecorte();
-            });
-        }
-
-        function iniciarCambioFotoGrupo() {
-            document.getElementById("menu-opciones-chat").classList.add("hidden");
-            destinoRecorte = "grupo";
-            document.getElementById("input-avatar-file").click();
-        }
-
-        document.getElementById("btn-guardar").addEventListener("click", () => {
-            const nombreIngresado = document.getElementById("input-nombre").value.trim().toLowerCase();
-            const emailRecuperar = document.getElementById("input-recuperar-email").value.trim().toLowerCase();
-            const btn = document.getElementById("btn-guardar");
-            const txtError = document.getElementById("error-registro");
-
-            if (nombreIngresado.length < 2) return alert("Nombre muy corto.");
-            btn.disabled = true;
-            txtError.classList.add("hidden");
-            verificarNombreLibreYRegistrar(nombreIngresado, emailRecuperar, btn, txtError);
-        });
-
-        function verificarNombreLibreYRegistrar(nombre, email, btn, txtError) {
-            let nombreOcupado = false;
-            const subCanal = `wasapedro/v3/verificar/${nombre}`;
-            clienteValidacion.subscribe(subCanal);
-
-            const manejarVerificacion = (topico, mensaje) => {
-                try {
-                    const data = JSON.parse(mensaje.toString());
-                    if (topico === subCanal && data.accion === "respuesta_ocupado") nombreOcupado = true;
-                } catch(e){}
-            };
-            clienteValidacion.on('message', manejarVerificacion);
-            clienteValidacion.publish(subCanal, JSON.stringify({ accion: "pregunta" }));
-
-            setTimeout(() => {
-                clienteValidacion.unsubscribe(subCanal);
-                if (nombreOcupado) {
-                    btn.disabled = false;
-                    txtError.classList.remove("hidden");
-                } else {
-                    miNombre = nombre;
-                    localStorage.setItem("wasapedro_mqtt_name", miNombre);
-                    if (email) localStorage.setItem("wasapedro_gmail_link", email);
-                    location.reload();
-                }
-            }, 1200);
-        }
-
-        function abrirModalGrupo() { document.getElementById("modal-grupo").classList.remove("hidden"); }
-        function cerrarModalGrupo() { document.getElementById("modal-grupo").classList.add("hidden"); }
-        function procesarCrearGrupo() {
-            const nom = document.getElementById("input-nombre-grupo").value.trim();
-            if (!nom) return alert("Asigna un nombre al grupo.");
-            const idGrupo = "grupo_" + Date.now();
-            datosGrupos[idGrupo] = { nombre: nom, creador: miNombre, esGrupo: true, foto: "" };
-            localStorage.setItem("wasapedro_datos_grupos", JSON.stringify(datosGrupos));
-            if(!listaAmigosActivos.includes(idGrupo)) listaAmigosActivos.push(idGrupo);
-            localStorage.setItem("wasapedro_amigos_list", JSON.stringify(listaAmigosActivos));
-            if (clienteMqtt && clienteMqtt.connected) {
-                clienteMqtt.subscribe(`wasapedro/v3/grupo/${idGrupo}`, { qos: 1 });
-            }
-            moverChatAlPrincipio(idGrupo);
-            cerrarModalGrupo();
-            abrirChat(idGrupo);
-        }
-
-        function conectarServidorCloud() {
-            if (clienteMqtt) { try { clienteMqtt.end(true); } catch(e){} }
-            actualizarPildoraConexion("conectando");
-
-            clienteMqtt = mqtt.connect(URL_SERVIDOR_MESSENGER, { 
-                clientId: "wasapedro_sess_" + miNombre,
-                reconnectPeriod: 3000, 
-                connectTimeout: 10000,
-                clean: false 
-            });
-
-            clienteMqtt.on('error', (err) => {
-                actualizarPildoraConexion("desconectado");
-            });
-
-            clienteMqtt.on('connect', () => {
-                actualizarPildoraConexion("conectado");
-                
-                clienteMqtt.subscribe(`wasapedro/v3/chat/${miNombre}`, { qos: 1 });
-                clienteMqtt.subscribe(`wasapedro/v3/sistema/bans/${miNombre}`, { qos: 1 }); 
-                clienteMqtt.subscribe(`wasapedro/v3/status/fotos`); 
-                clienteMqtt.subscribe(`wasapedro/v3/status/presencia`); 
-                clienteMqtt.subscribe(`wasapedro/v3/registry/announce`, { qos: 1 });
-                
-                Object.keys(datosGrupos).forEach(id => clienteMqtt.subscribe(`wasapedro/v3/grupo/${id}`, { qos: 1 }));
-
-                clienteMqtt.publish(`wasapedro/v3/registry/announce`, JSON.stringify({ usuario: miNombre, foto: miFotoB64 }), { qos: 1, retain: true });
-
-                actualizarListaAmigosUI();
-                procesarColaDeEnvios();
-            });
-
-            clienteMqtt.on('message', (topico, mensaje) => {
-                try {
-                    const data = JSON.parse(mensaje.toString());
-
-                    if (topico === `wasapedro/v3/sistema/bans/${miNombre}`) {
-                        localStorage.setItem("wasapedro_ban_status", JSON.stringify(data));
-                        mostrarPantallaBanAbsoluto(data.tipo, data.razon);
-                        return;
-                    }
-
-                    if (topico === `wasapedro/v3/registry/announce`) {
-                        if (data.usuario && data.usuario !== miNombre) {
-                            let registroGlobal = JSON.parse(localStorage.getItem("wasapedro_registro_global")) || {};
-                            registroGlobal[data.usuario] = { usuario: data.usuario, foto: data.foto || "" };
-                            localStorage.setItem("wasapedro_registro_global", JSON.stringify(registroGlobal));
-                        }
-                        return;
-                    }
-
-                    if (topico === `wasapedro/v3/status/presencia`) {
-                        if (data.usuario && data.usuario !== miNombre) {
-                            registrosPresenciaAmigos[data.usuario] = Date.now(); 
-                            actualizarListaAmigosUI();
-                            if (chatActivo === data.usuario) renderizarFotoCabeceraChat(chatActivo);
-                        }
-                        return;
-                    }
-
-                    if (topico === `wasapedro/v3/status/fotos`) {
-                        if (data.usuario && data.usuario !== miNombre) {
-                            fotosAmigos[data.usuario] = data.foto;
-                            localStorage.setItem("wasapedro_fotos_amigos", JSON.stringify(fotosAmigos));
-                            actualizarListaAmigosUI();
-                            if (chatActivo === data.usuario) renderizarFotoCabeceraChat(chatActivo);
-                        }
-                        return;
-                    }
-
-                    // RECEPCIÓN DE FORZADO DE INVITACIÓN DIRECTA A GRUPOS
-                    if (topico === `wasapedro/v3/chat/${miNombre}` && data.tipoSist === "invitacion_grupo") {
-                        let idG = data.idGrupo;
-                        if (!datosGrupos[idG]) {
-                            datosGrupos[idG] = { nombre: data.nombreGrupo, creador: data.creador, esGrupo: true, foto: data.fotoGrupo || "" };
-                            localStorage.setItem("wasapedro_datos_grupos", JSON.stringify(datosGrupos));
-                            if (!listaAmigosActivos.includes(idG)) listaAmigosActivos.push(idG);
-                            localStorage.setItem("wasapedro_amigos_list", JSON.stringify(listaAmigosActivos));
-                            clienteMqtt.subscribe(`wasapedro/v3/grupo/${idG}`, { qos: 1 });
-                            moverChatAlPrincipio(idG);
-                        }
-                        return;
-                    }
-
-                    // INTERCEPTAR ACTUALIZACIÓN MULTICAST DE FOTO DE GRUPO
-                    if (topico.includes("/grupo/") && data.esCambioFoto) {
-                        let idG = topico.split("/").pop();
-                        if (datosGrupos[idG]) {
-                            datosGrupos[idG].foto = data.fotoGrupoNueva;
-                            localStorage.setItem("wasapedro_datos_grupos", JSON.stringify(datosGrupos));
-                            actualizarListaAmigosUI();
-                            if (chatActivo === idG) renderizarFotoCabeceraChat(idG);
-                        }
-                    }
-
-                    if (!data.emisor || data.emisor === miNombre) return;
-                    if (listaBloqueados.includes(data.emisor)) return;
-
-                    let esGrupo = topico.includes("/grupo/");
-                    let idChat = esGrupo ? topico.split("/").pop() : data.emisor;
-
-                    if (esGrupo && !datosGrupos[idChat]) {
-                        datosGrupos[idChat] = { nombre: data.nombreGrupo || "Grupo MQTT", esGrupo: true, foto: data.fotoGrupoNueva || "" };
-                        localStorage.setItem("wasapedro_datos_grupos", JSON.stringify(datosGrupos));
-                    }
-
-                    if (data.fotoEmisor) {
-                        fotosAmigos[data.emisor] = data.fotoEmisor;
-                        localStorage.setItem("wasapedro_fotos_amigos", JSON.stringify(fotosAmigos));
-                        actualizarListaAmigosUI();
-                    }
-
-                    data.enviado = true;
-                    if (!historialesDeChats[idChat]) historialesDeChats[idChat] = [];
-                    if (!historialesDeChats[idChat].some(m => m.idMsg === data.idMsg)) {
-                        historialesDeChats[idChat].push(data);
-                        localStorage.setItem("wasapedro_historiales", JSON.stringify(historialesDeChats));
-                    }
-
-                    moverChatAlPrincipio(idChat);
-
-                    if (chatActivo === idChat) {
-                        renderizarMensajes();
-                    } else {
-                        notificacionesPendientes[idChat] = (notificacionesPendientes[idChat] || 0) + 1;
-                        localStorage.setItem("wasapedro_notif_pendientes", JSON.stringify(notificacionesPendientes));
-                        actualizarBuzonNotificacionesUI();
-                    }
-                } catch(e){}
-            });
-        }
-
-        setInterval(() => {
-            if (clienteMqtt && clienteMqtt.connected && miNombre) {
-                clienteMqtt.publish(`wasapedro/v3/status/presencia`, JSON.stringify({ usuario: miNombre }));
-            }
-        }, 10000);
-
-        function calcularEstadoAmigo(usuario) {
-            if (datosGrupos[usuario]) return 'grupo';
-            const ultimaVez = registrosPresenciaAmigos[usuario];
-            if (!ultimaVez) return 'desconectado'; 
-            const tiempoTranscurrido = Date.now() - ultimaVez;
-            if (tiempoTranscurrido < 15000) return 'conectado';   
-            return 'desconectado';                                
-        }
-
-        function procesarColaDeEnvios() {
-            if (!clienteMqtt || !clienteMqtt.connected || colaEnvios.length === 0) return;
-            let copiasMensajes = [...colaEnvios];
-            copiasMensajes.forEach((item) => {
-                try {
-                    clienteMqtt.publish(item.topico, JSON.stringify(item.payload), { qos: 1 }, (error) => {
-                        if (!error) {
-                            colaEnvios = colaEnvios.filter(c => c.idMsg !== item.idMsg);
-                            localStorage.setItem("wasapedro_cola_envios", JSON.stringify(colaEnvios));
-                            marcarMensajeComoEnviadoExitoso(item.chatId, item.idMsg);
-                        }
-                    });
-                } catch(err) {}
-            });
-        }
-
-        function marcarMensajeComoEnviadoExitoso(chatId, idMsg) {
-            if (historialesDeChats[chatId]) {
-                historialesDeChats[chatId] = historialesDeChats[chatId].map(m => {
-                    if (m.idMsg === idMsg) m.enviado = true;
-                    return m;
-                });
-                localStorage.setItem("wasapedro_historiales", JSON.stringify(historialesDeChats));
-                if (chatActivo === chatId) renderizarMensajes();
-            }
-        }
-
-        function buscarAmigo() {
-            const nom = document.getElementById("input-buscar").value.trim().toLowerCase();
-            if (!nom || nom === miNombre) return;
-            if (!listaAmigosActivos.includes(nom)) {
-                listaAmigosActivos.push(nom);
-                localStorage.setItem("wasapedro_amigos_list", JSON.stringify(listaAmigosActivos));
-            }
-            document.getElementById("input-buscar").value = "";
-            moverChatAlPrincipio(nom);
-            abrirChat(nom);
-        }
-
-        function abrirChat(id) {
-            chatActivo = id;
-            delete notificacionesPendientes[id];
-            localStorage.setItem("wasapedro_notif_pendientes", JSON.stringify(notificacionesPendientes));
-            actualizarBuzonNotificacionesUI();
-
-            document.getElementById("pantalla-chat-vacia").classList.add("hidden");
-            document.getElementById("pantalla-chat-activa").classList.remove("hidden");
-            document.getElementById("pantalla-chat-activa").classList.add("flex");
-
-            const esGrupo = datosGrupos[id];
-            const nombreMostrar = apodosContactos[id] || (esGrupo ? datosGrupos[id].nombre : id);
-            document.getElementById("nombre-chat-amigo").textContent = nombreMostrar;
-            
-            const btnBloquear = document.getElementById("btn-menu-bloquear");
-            if (esGrupo) {
-                btnBloquear.classList.add("hidden");
-            } else {
-                btnBloquear.classList.remove("hidden");
-                btnBloquear.innerHTML = listaBloqueados.includes(id) ? '<i class="ph ph-check-circle"></i> Desbloquear' : '<i class="ph ph-prohibit"></i> Bloquear';
-            }
-
-            renderizarFotoCabeceraChat(id);
-            renderizarMensajes();
-            actualizarListaAmigosUI();
-        }
-
-        function renderizarFotoCabeceraChat(id) {
-            const esGrupo = datosGrupos[id];
-            const imgAvatar = document.getElementById("avatar-chat-img");
-            const txtAvatar = document.getElementById("avatar-chat-txt");
-            const dotCabecera = document.getElementById("dot-presencia-cabecera");
-            const nombreMostrar = apodosContactos[id] || (esGrupo ? datosGrupos[id].nombre : id);
-
-            if (esGrupo) {
-                if(datosGrupos[id].foto) {
-                    txtAvatar.classList.add("hidden");
-                    imgAvatar.src = datosGrupos[id].foto;
-                    imgAvatar.classList.remove("hidden");
-                } else {
-                    imgAvatar.classList.add("hidden");
-                    txtAvatar.innerHTML = '<i class="ph ph-users-three text-sm"></i>';
-                    txtAvatar.className = "w-9 h-9 bg-[#1e293b] text-[#3a9cd6] font-bold rounded-full flex items-center justify-center text-xs border border-slate-700";
-                    txtAvatar.classList.remove("hidden");
-                }
-                dotCabecera.classList.add("hidden");
-            } else {
-                if (fotosAmigos[id]) {
-                    txtAvatar.classList.add("hidden");
-                    imgAvatar.src = fotosAmigos[id];
-                    imgAvatar.classList.remove("hidden");
-                } else {
-                    imgAvatar.classList.add("hidden");
-                    txtAvatar.textContent = nombreMostrar.charAt(0).toUpperCase();
-                    txtAvatar.className = "w-9 h-9 bg-[#1e293b] text-[#3a9cd6] font-bold rounded-full flex items-center justify-center text-xs border border-slate-700";
-                    txtAvatar.classList.remove("hidden");
-                }
-                
-                dotCabecera.classList.remove("hidden", "bg-green-500", "bg-yellow-500", "bg-red-500", "pulso-estado");
-                let estado = calcularEstadoAmigo(id);
-                if (estado === 'conectado') dotCabecera.classList.add("bg-green-500");
-                else dotCabecera.classList.add("bg-red-500");
-            }
-        }
-
-        function enviarMensajeTexto() {
-            if (!chatActivo) return;
-            const input = document.getElementById("input-mensaje");
-            const texto = input.value.trim();
-            if (!texto) return;
-
-            const idUnicoMensaje = "msg_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
-            const payload = {
-                idMsg: idUnicoMensaje,
-                emisor: miNombre,
-                texto: texto,
-                fotoEmisor: miFotoB64,
-                timestamp: Date.now()
-            };
-
-            const esGrupo = datosGrupos[chatActivo];
-            if (esGrupo) payload.nombreGrupo = datosGrupos[chatActivo].nombre;
-
-            const objetoHistorial = { ...payload, enviado: false };
-            if (!historialesDeChats[chatActivo]) historialesDeChats[chatActivo] = [];
-            historialesDeChats[chatActivo].push(objetoHistorial);
-            localStorage.setItem("wasapedro_historiales", JSON.stringify(historialesDeChats));
-
-            const topico = esGrupo ? `wasapedro/v3/grupo/${chatActivo}` : `wasapedro/v3/chat/${chatActivo}`;
-            colaEnvios.push({ idMsg: idUnicoMensaje, chatId: chatActivo, topico: topico, payload: payload });
-            localStorage.setItem("wasapedro_cola_envios", JSON.stringify(colaEnvios));
-
-            input.value = "";
-            moverChatAlPrincipio(chatActivo);
-            renderizarMensajes();
-            procesarColaDeEnvios();
-        }
-
-        function renderizarMensajes() {
-            const contenedor = document.getElementById("contenedor-mensajes");
-            contenedor.innerHTML = "";
-            const lista = historialesDeChats[chatActivo] || [];
-
-            lista.forEach(m => {
-                const soyYo = m.emisor === miNombre;
-                const d = document.createElement("div");
-                d.className = `flex flex-col max-w-[70%] ${soyYo ? 'ml-auto items-end' : 'mr-auto items-start'} mb-1.5 transition-all`;
-                
-                let cuerpo = "";
-                if(!soyYo && datosGrupos[chatActivo]) {
-                    cuerpo += `<span class="text-[10px] text-slate-400 font-semibold mb-0.5 px-1">~${m.emisor || "Usuario"}</span>`;
-                }
-                
-                let estiloBubble = soyYo ? `style="background-color: ${temaActual}; color: #ffffff;"` : '';
-                cuerpo += `<div ${estiloBubble} class="p-3 rounded-2xl text-xs relative shadow-sm ${soyYo ? 'font-medium rounded-tr-none' : 'bg-[#1e293b] text-slate-100 rounded-tl-none border border-slate-800/40'}">`;
-                
-                if(m.archivoB64) {
-                    if(m.tipoArchivo?.startsWith("image/")) cuerpo += `<img src="${m.archivoB64}" class="max-w-xs rounded-xl mb-1 border border-black/10">`;
-                    else cuerpo += `<a href="${m.archivoB64}" download="${m.nombreArchivo}" class="underline text-sky-400 font-medium block mb-1 flex items-center gap-1"><i class="ph ph-file-arrow-down text-sm"></i> ${m.nombreArchivo || 'Archivo adjunto'}</a>`;
-                }
-                if(m.texto) cuerpo += `<p class="break-all leading-relaxed">${m.texto}</p>`;
-                
-                if (soyYo) {
-                    const iconoEstado = m.enviado 
-                        ? '<i class="ph ph-checks text-white/80 ml-1 text-xs"></i>' 
-                        : '<i class="ph ph-clock text-white/50 ml-1 text-xs animate-spin"></i>';
-                    cuerpo += `<div class="text-right block text-[8px] opacity-60 mt-0.5">${iconoEstado}</div>`;
-                }
-                cuerpo += `</div>`;
-                
-                d.innerHTML = cuerpo;
-                contenedor.appendChild(d);
-            });
-            contenedor.scrollTop = contenedor.scrollHeight;
-        }
-
-        function actualizarListaAmigosUI() {
-            const contenedor = document.getElementById("contenedor-lista-dinamica");
-            if (!contenedor) return;
-            contenedor.innerHTML = "";
-            
-            let unificados = [...new Set([...ordenChats, ...listaAmigosActivos])];
-            ordenChats = unificados;
-            localStorage.setItem("wasapedro_orden_chats", JSON.stringify(ordenChats));
-
-            ordenChats.forEach(id => {
-                const esGrupo = datosGrupos[id];
-                const nombre = apodosContactos[id] || (esGrupo ? datosGrupos[id].nombre : id);
-                const tieneFoto = esGrupo ? datosGrupos[id].foto : fotosAmigos[id];
-                const div = document.createElement("div");
-                
-                let estado = calcularEstadoAmigo(id);
-                let dotHtml = '';
-                if (!esGrupo) {
-                    let dotColor = estado === 'conectado' ? "bg-green-500" : "bg-red-500";
-                    dotHtml = `<span class="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#131b2e] ${dotColor}"></span>`;
-                }
-
-                div.className = `p-2.5 mx-1 flex items-center gap-3 rounded-xl cursor-pointer hover:bg-[#1e293b]/40 border border-transparent transition-all duration-200 active:scale-[0.99] ${chatActivo === id ? 'bg-[#1e293b]/80 border-slate-800' : ''}`;
-                div.onclick = () => abrirChat(id);
-                
-                div.innerHTML = `
-                    <div class="relative flex-shrink-0">
-                        <div class="w-10 h-10 bg-[#1e293b] rounded-full flex items-center justify-center font-bold text-xs text-[#3a9cd6] overflow-hidden border border-slate-800">
-                            ${esGrupo ? (tieneFoto ? `<img src="${tieneFoto}" class="w-full h-full object-cover">` : '<i class="ph ph-users-three text-base"></i>') : (tieneFoto ? `<img src="${tieneFoto}" class="w-full h-full object-cover">` : nombre.charAt(0).toUpperCase())}
-                        </div>
-                        ${dotHtml}
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <span class="text-xs font-semibold text-slate-200 block truncate">${nombre}</span>
-                    </div>
-                `;
-                contenedor.appendChild(div);
-            });
-        }
-
-        function moverChatAlPrincipio(idChat) {
-            ordenChats = ordenChats.filter(id => id !== idChat);
-            ordenChats.unshift(idChat);
-            localStorage.setItem("wasapedro_orden_chats", JSON.stringify(ordenChats));
-            actualizarListaAmigosUI();
-        }
-
-        function actualizarBuzonNotificacionesUI() {
-            const cont = document.getElementById("lista-notificaciones");
-            cont.innerHTML = "";
-            let llaves = Object.keys(notificacionesPendientes);
-            if(llaves.length === 0) {
-                cont.innerHTML = `<p class="italic text-slate-500 text-[11px]">Sin avisos pendientes.</p>`;
-                return;
-            }
-            llaves.forEach(k => {
-                let p = document.createElement("p");
-                p.className = "bg-[#1e293b] border border-slate-800/60 p-1.5 px-2 rounded-lg flex justify-between cursor-pointer text-sky-400 font-medium text-[11px] hover:border-slate-700 transition-all";
-                p.onclick = () => abrirChat(k);
-                p.innerHTML = `<span>@${k}</span> <span class="bg-[#3a9cd6] text-white px-1.5 rounded-full text-[9px] font-bold flex items-center">${notificacionesPendientes[k]}</span>`;
-                cont.appendChild(p);
-            });
-        }
-
-        function toggleMenuOpcionesChat() {
-            const menu = document.getElementById("menu-opciones-chat");
-            menu.classList.toggle("hidden");
-            
-            const esGrupo = datosGrupos[chatActivo];
-            const soyCreador = esGrupo && datosGrupos[chatActivo].creador === miNombre;
-            
-            document.getElementById("btn-menu-foto-grupo").className = soyCreador ? "w-full text-left px-4 py-2.5 hover:bg-[#2a3942]/40 text-slate-200 flex items-center gap-2 text-xs" : "hidden";
-            document.getElementById("btn-menu-agregar-grupo").className = soyCreador ? "w-full text-left px-4 py-2.5 hover:bg-[#2a3942]/40 text-slate-200 flex items-center gap-2 text-xs" : "hidden";
-        }
-
-        // CONTROL DE AGREGAR MIEMBROS SIN ID MANUAL
-        function abrirModalAgregarMiembros() {
-            document.getElementById("menu-opciones-chat").classList.add("hidden");
-            document.getElementById("modal-agregar-miembros").classList.remove("hidden");
-            
-            const cont = document.getElementById("lista-contactos-para-grupo");
-            cont.innerHTML = "";
-            
-            let contactosDirectos = listaAmigosActivos.filter(id => !datosGrupos[id]);
-            if(contactosDirectos.length === 0) {
-                cont.innerHTML = `<p class="text-xs text-slate-500 italic text-center py-4">No tienes chats directos guardados.</p>`;
-                return;
-            }
-            
-            contactosDirectos.forEach(c => {
-                const nombre = apodosContactos[c] || c;
-                const foto = fotosAmigos[c];
-                const div = document.createElement("div");
-                div.className = "flex items-center justify-between p-2.5 bg-[#1e293b]/60 border border-slate-800 rounded-xl text-xs shadow-inner";
-                
-                let avatarHtml = foto 
-                    ? `<img src="${foto}" class="w-7 h-7 rounded-full object-cover">` 
-                    : `<div class="w-7 h-7 bg-[#1e293b] rounded-full flex items-center justify-center text-sky-400 font-bold">${nombre.charAt(0).toUpperCase()}</div>`;
-                
-                div.innerHTML = `
-                    <div class="flex items-center gap-2 min-w-0">
-                        ${avatarHtml}
-                        <span class="font-medium text-slate-200 truncate">@${c}</span>
-                    </div>
-                    <button onclick="invitarContactoAGrupoDirecto('${c}', this)" class="bg-[#3a9cd6] theme-bg text-white px-3 py-1 rounded-lg text-[11px] font-semibold transition-all active:scale-[0.97]">Añadir</button>
-                `;
-                cont.appendChild(div);
-            });
-        }
-
-        function invitarContactoAGrupoDirecto(contacto, boton) {
-            if(!chatActivo || !datosGrupos[chatActivo]) return;
-            let idG = chatActivo;
-            let infoG = datosGrupos[idG];
-            
-            let payloadInvitacion = {
-                tipoSist: "invitacion_grupo",
-                idGrupo: idG,
-                nombreGrupo: infoG.nombre,
-                creador: infoG.creador,
-                fotoGrupo: infoG.foto || "",
-                emisor: miNombre
-            };
-            
-            if(clienteMqtt && clienteMqtt.connected) {
-                clienteMqtt.publish(`wasapedro/v3/chat/${contacto}`, JSON.stringify(payloadInvitacion), { qos: 1 });
-                boton.textContent = "Añadido ✓";
-                boton.disabled = true;
-                boton.className = "bg-green-600/20 text-green-400 border border-green-500/20 px-2.5 py-1 rounded-lg text-[11px] cursor-not-allowed font-medium";
-            } else {
-                alert("Sin conexión.");
-            }
-        }
-
-        // VER PANEL GLOBAL DE USUARIOS REGISTRADOS
-        function abrirModalUsuariosAdmin() {
-            document.getElementById("modal-config").classList.add("hidden");
-            document.getElementById("modal-admin-usuarios").classList.remove("hidden");
-            renderizarUsuariosGlobalAdmin();
-        }
-
-        function renderizarUsuariosGlobalAdmin() {
-            const cont = document.getElementById("lista-usuarios-global-contenedor");
-            cont.innerHTML = "";
-            let registroGlobal = JSON.parse(localStorage.getItem("wasapedro_registro_global")) || {};
-            let usuarios = Object.values(registroGlobal);
-            
-            if(usuarios.length === 0) {
-                cont.innerHTML = `<p class="text-xs text-slate-500 italic text-center mt-10">Ningún usuario registrado en la red aún.</p>`;
-                return;
-            }
-            
-            usuarios.forEach(u => {
-                const div = document.createElement("div");
-                div.className = "p-3 bg-[#1e293b] rounded-xl border border-slate-800 flex items-center justify-between gap-3 text-xs";
-                
-                let avatarHtml = u.foto 
-                    ? `<img src="${u.foto}" class="w-8 h-8 rounded-full object-cover">` 
-                    : `<div class="w-8 h-8 bg-[#131b2e] rounded-full flex items-center justify-center font-bold text-sky-400 border border-slate-700">${u.usuario.charAt(0).toUpperCase()}</div>`;
-                
-                div.innerHTML = `
-                    <div class="flex items-center gap-2 min-w-0">
-                        ${avatarHtml}
-                        <span class="font-semibold text-white truncate">@${u.usuario}</span>
-                    </div>
-                    <div class="flex gap-1.5 flex-shrink-0">
-                        <button onclick="ejecutarBaneoGlobal('${u.usuario}', 'Baneado')" class="bg-yellow-600/20 border border-yellow-600/30 text-yellow-500 font-medium py-1 px-2.5 rounded-lg text-[10px] hover:bg-yellow-600 hover:text-white transition-all">Banear</button>
-                        <button onclick="ejecutarBaneoGlobal('${u.usuario}', 'Permabaneado')" class="bg-red-600/20 border border-red-600/30 text-red-400 font-medium py-1 px-2.5 rounded-lg text-[10px] hover:bg-red-600 hover:text-white transition-all">Permabanear</button>
-                    </div>
-                `;
-                cont.appendChild(div);
-            });
-        }
-
-        function ejecutarBaneoGlobal(usuarioTarget, tipo) {
-            if (usuarioTarget === miNombre) return alert("No puedes autosancionarte.");
-            const razon = prompt(`Razón para marcar como ${tipo} a @${usuarioTarget}:`);
-            if (razon && razon.trim() !== "") {
-                if(clienteMqtt && clienteMqtt.connected) {
-                    let payloadBan = { tipo: tipo, razon: razon.trim(), usuarioBaneado: usuarioTarget };
-                    // Publicar con RETAIN para que impacte de forma fija e inmediata en el broker
-                    clienteMqtt.publish(`wasapedro/v3/sistema/bans/${usuarioTarget}`, JSON.stringify(payloadBan), { qos: 1, retain: true });
-                    alert(`Acción ${tipo} enviada con éxito para @${usuarioTarget}`);
-                } else {
-                    alert("Sin conexión.");
-                }
-            }
-        }
-
-        document.addEventListener("click", function(e) {
-            const menu = document.getElementById("menu-opciones-chat");
-            const btn = menu?.previousElementSibling;
-            if (menu && !menu.classList.contains("hidden") && !menu.contains(e.target) && !btn.contains(e.target)) {
-                menu.classList.add("hidden");
-            }
-        });
-
-        function menuPonerApodo() {
-            document.getElementById("menu-opciones-chat").classList.add("hidden");
-            if (!chatActivo) return;
-            const actual = apodosContactos[chatActivo] || "";
-            const nuevo = prompt("Introduce el apodo para este chat:", actual);
-            if (nuevo !== null) {
-                if (nuevo.trim() === "") delete apodosContactos[chatActivo];
-                else apodosContactos[chatActivo] = nuevo.trim();
-                localStorage.setItem("wasapedro_apodos", JSON.stringify(apodosContactos));
-                actualizarListaAmigosUI();
-                abrirChat(chatActivo);
-            }
-        }
-
-        function menuBorrarChat() {
-            document.getElementById("menu-opciones-chat").classList.add("hidden");
-            if (!chatActivo) return;
-            if (confirm("¿Borrar el historial local de este chat?")) {
-                historialesDeChats[chatActivo] = [];
-                localStorage.setItem("wasapedro_historiales", JSON.stringify(historialesDeChats));
-                renderizarMensajes();
-            }
-        }
-
-        function menuBloquearContacto() {
-            document.getElementById("menu-opciones-chat").classList.add("hidden");
-            if (!chatActivo) return;
-            if (datosGrupos[chatActivo]) return alert("No se pueden bloquear grupos.");
-            
-            const idx = listaBloqueados.indexOf(chatActivo);
-            if (idx > -1) {
-                listaBloqueados.splice(idx, 1);
-            } else {
-                listaBloqueados.push(chatActivo);
-            }
-            localStorage.setItem("wasapedro_bloqueados", JSON.stringify(listaBloqueados));
-            actualizarListaBloqueadosUI();
-            abrirChat(chatActivo);
-        }
-
-        function actualizarListaBloqueadosUI() {
-            const cont = document.getElementById("contenedor-bloqueados");
-            if (!cont) return;
-            cont.innerHTML = "";
-            if (listaBloqueados.length === 0) {
-                cont.innerHTML = '<p class="text-[11px] text-slate-500 italic">No hay contactos bloqueados.</p>';
-                return;
-            }
-            listaBloqueados.forEach(b => {
-                const div = document.createElement("div");
-                div.className = "flex justify-between items-center bg-[#1e293b] p-2 rounded-lg border border-slate-800 text-[11px]";
-                div.innerHTML = `<span>@${b}</span> <button onclick="desbloquearDirecto('${b}')" class="text-red-400 hover:text-red-500 font-medium">Desbloquear</button>`;
-                cont.appendChild(div);
-            });
-        }
-
-        function desbloquearDirecto(u) {
-            listaBloqueados = listaBloqueados.filter(x => x !== u);
-            localStorage.setItem("wasapedro_bloqueados", JSON.stringify(listaBloqueados));
-            actualizarListaBloqueadosUI();
-            if (chatActivo === u) abrirChat(u);
-        }
-
-        function cambiarTema(c) {
-            temaActual = c;
-            localStorage.setItem("wasapedro_theme_color", c);
-            aplicarColorTema(c);
-        }
-
-        function aplicarColorTema(c) {
-            document.querySelectorAll(".theme-bg").forEach(el => el.style.backgroundColor = c);
-            document.querySelectorAll(".theme-text").forEach(el => el.style.color = c);
-            if (chatActivo) renderizarMensajes();
-        }
-
-        function guardarCorreoVinculado() {
-            gmailVinculado = document.getElementById("input-cuenta-gmail").value.trim().toLowerCase();
-            localStorage.setItem("wasapedro_gmail_link", gmailVinculado);
-            alert("Correo guardado.");
-        }
-        function subirCopiaNube() {
-            if(!gmailVinculado) return alert("Primero vincula un correo.");
-            let paquete = {
-                amigos: listaAmigosActivos, historiales: historialesDeChats, apodos: apodosContactos,
-                bloqueados: listaBloqueados, datosGrupos: datosGrupos, fotosAmigos: fotosAmigos,
-                ordenChats: ordenChats, miFoto: miFotoB64, tema: temaActual
-            };
-            if(clienteMqtt && clienteMqtt.connected) {
-                clienteMqtt.publish(`wasapedro/v3/backup/${btoa(gmailVinculado)}`, JSON.stringify({
-                    usuario: miNombre, payload: JSON.stringify(paquete)
-                }), { retain: true });
-                document.getElementById("status-cloud").textContent = "Copia guardada en Nube ✓";
-            }
-        }
         function cerrarSesionLimpiar() {
+            if (!confirm("¿Desvincular nodo de este cliente? Se limpiará el almacenamiento local.")) return;
             localStorage.clear();
-            location.reload();
+            window.location.reload();
         }
 
-        function inicializarEventosArrastrarArchivos() {
-            const zona = document.getElementById("pantalla-chat-activa");
-            const visual = document.getElementById("zona-drop-visual");
-            window.addEventListener("dragover", e => e.preventDefault());
-            window.addEventListener("drop", e => e.preventDefault());
-            zona.addEventListener("dragenter", () => visual.style.opacity = "1");
-            visual.addEventListener("dragleave", () => visual.style.opacity = "0");
-            zona.addEventListener("drop", (e) => {
-                visual.style.opacity = "0";
-                let f = e.dataTransfer.files[0];
-                if(f) procesarArchivoAdjunto(f);
-            });
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
         }
-
-        function procesarArchivoAdjunto(archivo) {
-            if(!archivo || !chatActivo) return;
-            if(archivo.size > 2000000) return alert("Máximo permitido: 2MB.");
-            let lector = new FileReader();
-            lector.onload = function(e) {
-                const idUnicoMsg = "msg_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
-                const payload = {
-                    idMsg: idUnicoMsg,
-                    emisor: miNombre, texto: "", archivoB64: e.target.result,
-                    tipoArchivo: archivo.type, nombreArchivo: archivo.name, timestamp: Date.now()
-                };
-                const esGrupo = datosGrupos[chatActivo];
-                if(esGrupo) payload.nombreGrupo = datosGrupos[chatActivo].nombre;
-                
-                const objetoHistorial = { ...payload, enviado: false };
-                if (!historialesDeChats[chatActivo]) historialesDeChats[chatActivo] = [];
-                historialesDeChats[chatActivo].push(objetoHistorial);
-                localStorage.setItem("wasapedro_historiales", JSON.stringify(historialesDeChats));
-
-                let topico = esGrupo ? `wasapedro/v3/grupo/${chatActivo}` : `wasapedro/v3/chat/${chatActivo}`;
-                colaEnvios.push({ idMsg: idUnicoMsg, chatId: chatActivo, topico: topico, payload: payload });
-                localStorage.setItem("wasapedro_cola_envios", JSON.stringify(colaEnvios));
-
-                moverChatAlPrincipio(chatActivo);
-                renderizarMensajes();
-                procesarColaDeEnvios();
-            };
-            lector.readAsDataURL(archivo);
-        }
-
-        function abrirModalReporte() {
-            if(!chatActivo) return;
-            document.getElementById("menu-opciones-chat").classList.add("hidden");
-            document.getElementById("nombre-reportado-txt").textContent = chatActivo;
-            document.getElementById("input-motivo-reporte").value = "";
-            document.getElementById("modal-reporte").classList.remove("hidden");
-        }
-        function cerrarModalReporte() { document.getElementById("modal-reporte").classList.add("hidden"); }
-
-        function enviarReporte() {
-            const motivo = document.getElementById("input-motivo-reporte").value.trim();
-            if (motivo.length < 5) return alert("Por favor, explica el motivo.");
-
-            const reporte = {
-                id: "rep_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
-                denunciante: miNombre, denunciado: chatActivo, motivo: motivo, fecha: new Date().toLocaleString()
-            };
-
-            if (clienteMqtt && clienteMqtt.connected) {
-                clienteMqtt.publish(`wasapedro/v3/sistema/reportes`, JSON.stringify(reporte));
-                alert("Denuncia enviada.");
-                cerrarModalReporte();
-            }
-        }
-
-        function abrirModalAdminLogin() {
-            document.getElementById("input-admin-pass").value = "";
-            document.getElementById("modal-admin-login").classList.remove("hidden");
-        }
-
-        function verificarAdmin() {
-            const contra = document.getElementById("input-admin-pass").value;
-            if (contra === CONTRASENA_ADMIN_MASTER) {
-                esAdmin = true;
-                localStorage.setItem("wasapedro_is_admin", "true");
-                document.getElementById("modal-admin-login").classList.add("hidden");
-                document.getElementById("btn-usuarios-admin-view").classList.remove("hidden");
-                alert("Modo Administrador activado de forma permanente.");
-            } else {
-                alert("Contraseña incorrecta.");
-            }
-        }
-
-        document.getElementById("input-mensaje")?.addEventListener("keypress", function(e) {
-            if (e.key === "Enter") enviarMensajeTexto();
-        });
-
-        inicializarUI();
     </script>
 </body>
 </html>
