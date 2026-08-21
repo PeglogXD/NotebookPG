@@ -2,322 +2,351 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WasaPedro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WasaPedro | Professional Chat</title>
     <link rel="manifest" href="manifest.json"> 
-    <meta name="theme-color" id="meta-theme" content="#0a0f1d">
+    <meta name="theme-color" id="meta-theme" content="#09090b">
+    
+    <!-- Librerías Externas -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.js"></script>
     
+    <!-- Configuración Tailwind Custom -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: { 900: '#09090b', 800: '#18181b', 700: '#27272a', 600: '#3f3f46' },
+                        brand: { 500: '#3b82f6', 600: '#2563eb' }
+                    },
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=400;500;600;700&display=swap');
         
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #0a0f1d;
-        }
-        .cr-slider-path { background: #1e293b !important; height: 6px !important; }
-        .cr-slider-handle { background: #3a9cd6 !important; border: none !important; width: 16px !important; height: 16px !important; top: -5px !important; }
-        .cr-boundary { border-radius: 16px !important; overflow: hidden !important; border: 1px solid #334155 !important; }
+        body { background-color: #09090b; color: #e4e4e7; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-font-smoothing: antialiased; margin: 0; padding: 0; }
         
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        /* Scrollbar Premium */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 20px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
 
-        @keyframes entradaSuave {
-            from { opacity: 0; transform: translateY(12px) scale(0.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        @keyframes pulsoPresencia {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.2); opacity: 0.7; }
-        }
-        .animar-entrada { animation: entradaSuave 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        .pulso-estado { animation: pulsoPresencia 2s infinite ease-in-out; }
+        /* Croppie Customization */
+        .cr-slider-path { background: #27272a !important; height: 4px !important; }
+        .cr-slider-handle { background: #3b82f6 !important; border: none !important; width: 14px !important; height: 14px !important; top: -5px !important; box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
+        .cr-boundary { border-radius: 20px !important; overflow: hidden !important; border: 1px solid #27272a !important; }
+        
+        /* Animaciones */
+        @keyframes fadeInScale { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        @keyframes pulseGlow { 0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); } 50% { box-shadow: 0 0 0 4px rgba(59, 130, 246, 0); } }
+        
+        .animar-entrada, .animate-fade-in { animation: fadeInScale 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .pulso-estado { animation: pulseGlow 2s infinite ease-in-out; }
+        
+        .glass-panel { background: rgba(24, 24, 27, 0.8); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
     </style>
 </head>
-<body class="h-screen w-screen flex flex-col text-slate-200 overflow-hidden select-none p-0">
+<body class="h-screen w-screen flex flex-col overflow-hidden select-none relative bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-dark-900">
 
-    <div id="pantalla-ban" class="fixed inset-0 bg-[#0a0f1d] z-[9999] flex flex-col items-center justify-center p-6 text-center hidden">
-        <div class="w-20 h-20 bg-red-950/40 border border-red-500/30 text-red-500 rounded-full flex items-center justify-center text-4xl mb-4 animate-pulse">
+    <!-- PANTALLA DE BANEO -->
+    <div id="pantalla-ban" class="fixed inset-0 bg-dark-900 z-[9999] flex flex-col items-center justify-center p-6 text-center hidden">
+        <div class="w-24 h-24 bg-red-500/10 border border-red-500/20 text-red-500 rounded-full flex items-center justify-center text-5xl mb-6 animate-pulse">
             <i class="ph ph-prohibit-bold"></i>
         </div>
-        <h1 id="pantalla-ban-tipo" class="text-3xl font-extrabold text-red-500 tracking-tight mb-2">Baneado</h1>
-        <p class="text-slate-400 text-xs max-w-sm mb-4">Tu acceso a los servidores de WasaPedro ha sido revocado por violaciones a los términos del sistema.</p>
-        <div class="bg-[#131b2e] border border-slate-800 p-4 rounded-xl max-w-md w-full">
-            <span class="text-[10px] uppercase font-bold tracking-wider text-slate-500 block mb-1">Razón de la Sanción:</span>
-            <p id="pantalla-ban-razon" class="text-slate-200 text-xs italic font-medium">...</p>
+        <h1 id="pantalla-ban-tipo" class="text-4xl font-extrabold text-white mb-2">Acceso Revocado</h1>
+        <p class="text-gray-400 text-sm max-w-md mb-6">Tu cuenta ha sido suspendida de la red WasaPedro.</p>
+        <div class="bg-dark-800 border border-dark-700 p-5 rounded-2xl max-w-md w-full shadow-2xl">
+            <span class="text-xs uppercase font-bold tracking-widest text-red-400 block mb-2">Motivo Oficial:</span>
+            <p id="pantalla-ban-razon" class="text-gray-200 text-sm font-medium">...</p>
         </div>
     </div>
 
-    <div class="flex-1 w-full flex flex-col items-center justify-center p-4 overflow-hidden relative">
-
-        <div id="pantalla-registro" class="bg-[#131b2e] p-8 rounded-2xl shadow-2xl border border-slate-800 max-w-sm w-full text-center hidden z-10 animar-entrada">
-            <div class="w-16 h-16 bg-[#1e293b] text-[#3a9cd6] rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 border border-slate-700 shadow-inner">
-                <i class="ph ph-chats-teardrop-duotone"></i>
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div class="flex-1 w-full h-full flex flex-col items-center justify-center absolute inset-0">
+        
+        <!-- PANTALLA DE LOGIN -->
+        <main id="pantalla-registro" class="glass-panel p-10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.5)] max-w-md w-full mx-4 text-center hidden z-10 animar-entrada relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-500 to-purple-500"></div>
+            <div class="w-20 h-20 bg-dark-800 text-brand-500 rounded-2xl flex items-center justify-center text-4xl mx-auto mb-6 border border-dark-700 shadow-inner">
+                <i class="ph ph-planet"></i>
             </div>
-            <h1 class="text-3xl font-extrabold text-[#3a9cd6] mb-1 theme-text tracking-tight">WasaPedro</h1>
-            <p class="text-slate-400 text-xs mb-6">Plataforma de comunicación en tiempo real</p>
-            <input type="text" id="input-nombre" placeholder="Tu nombre de usuario..." class="w-full bg-[#1e293b] border border-slate-700 text-white rounded-xl p-3 mb-2 focus:outline-none focus:border-[#3a9cd6] transition-all text-sm placeholder-slate-500">
-            <p id="error-registro" class="text-xs text-red-400 mb-4 h-4 italic hidden">Este nombre ya está en uso. Elige otro.</p>
-            <div class="bg-[#0f172a] p-3 rounded-xl border border-slate-800 mb-5 text-left">
-                <label class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1.5">¿Dispositivo nuevo? Vincula tu correo:</label>
-                <input type="email" id="input-recuperar-email" placeholder="correo@institucion.edu (Opcional)" class="w-full bg-[#1e293b] text-xs text-white border border-slate-800 rounded-lg p-2.5 focus:outline-none focus:border-slate-700">
-            </div>
-            <button id="btn-guardar" class="w-full bg-[#3a9cd6] theme-bg hover:opacity-95 text-white font-semibold p-3 rounded-xl transition-all shadow-lg shadow-sky-500/10 active:scale-[0.98] disabled:opacity-50 text-sm">Ingresar / Restaurar</button>
-        </div>
-
-        <div id="interfaz-principal" class="w-full max-w-5xl h-[88vh] bg-[#131b2e] rounded-2xl shadow-2xl border border-slate-800/80 overflow-hidden hidden z-10 animar-entrada">
+            <h1 class="text-4xl font-extrabold text-white mb-2 tracking-tight">Wasa<span class="text-brand-500 theme-text">Pedro</span></h1>
+            <p class="text-gray-400 text-sm mb-8">Conexión en tiempo real ultra-rápida</p>
             
-            <div class="w-1/3 border-r border-slate-800 flex flex-col bg-[#131b2e]">
-                <div class="p-4 bg-[#1e293b]/60 border-b border-slate-800/50 flex justify-between items-center">
-                    <div class="flex items-center gap-3 min-w-0">
-                        <img id="avatar-usuario-img" src="" class="w-10 h-10 rounded-full object-cover hidden border border-slate-700">
-                        <div id="avatar-usuario-txt" class="w-10 h-10 bg-[#1e293b] text-[#3a9cd6] font-bold rounded-full flex items-center justify-center text-base border border-slate-700 hidden">?</div>
+            <div class="space-y-4 text-left">
+                <div class="relative">
+                    <input type="text" id="input-nombre" placeholder="Nombre de usuario" class="w-full bg-dark-800/50 border border-dark-700 text-white rounded-xl py-3.5 px-4 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm placeholder-gray-500">
+                </div>
+                <p id="error-registro" class="text-xs text-red-400 text-left pl-2 hidden transition-all">⚠️ Este nombre ya está en uso.</p>
+                
+                <div class="relative">
+                    <input type="email" id="input-recuperar-email" placeholder="Correo para respaldo (Opcional)" class="w-full bg-dark-800/50 border border-dark-700 text-white rounded-xl py-3.5 px-4 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all text-sm placeholder-gray-500">
+                </div>
+            </div>
+
+            <button id="btn-guardar" class="w-full mt-8 bg-brand-600 theme-bg hover:bg-brand-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-[0_0_20px_rgba(59,130,246,0.3)] active:scale-[0.98] disabled:opacity-50 flex justify-center items-center gap-2">
+                Ingresar al Sistema
+            </button>
+        </main>
+
+        <!-- INTERFAZ PRINCIPAL (APP) -->
+        <div id="interfaz-principal" class="w-full max-w-6xl h-full md:h-[92vh] md:rounded-3xl shadow-2xl overflow-hidden hidden z-10 animar-entrada border-0 md:border md:border-dark-700 bg-dark-900/95 flex-row">
+            
+            <!-- SIDEBAR -->
+            <aside class="w-full md:w-[320px] lg:w-[350px] flex-shrink-0 border-r border-dark-700 flex flex-col bg-dark-900">
+                <header class="p-4 border-b border-dark-700/50 flex justify-between items-center bg-dark-800/50">
+                    <div class="flex items-center gap-3 min-w-0 cursor-pointer" onclick="abrirModalConfiguracion()">
+                        <div class="relative">
+                            <img id="avatar-usuario-img" src="" class="w-10 h-10 rounded-full object-cover hidden border-2 border-brand-500">
+                            <div id="avatar-usuario-txt" class="w-10 h-10 bg-dark-700 text-brand-500 font-bold rounded-full flex items-center justify-center text-sm border border-dark-600 hidden">?</div>
+                            <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-dark-900"></span>
+                        </div>
                         <div class="flex flex-col min-w-0">
-                            <span id="nombre-usuario-pantalla" class="font-semibold text-sm truncate text-white">...</span>
-                            <span id="indicador-conexion" class="text-[10px] font-medium text-yellow-500 flex items-center gap-1">
-                                <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 inline-block animate-pulse"></span> Conectando...
+                            <span id="nombre-usuario-pantalla" class="font-bold text-sm truncate text-white">...</span>
+                            <span id="indicador-conexion" class="text-[10px] font-medium text-yellow-500 flex items-center gap-1 mt-0.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></span> Conectando...
                             </span>
                         </div>
                     </div>
-                    <div class="flex gap-1">
-                        <button onclick="abrirModalGrupo()" class="text-xl text-slate-400 hover:text-white p-2 rounded-xl hover:bg-[#1e293b] transition-all" title="Crear Grupo">
-                            <i class="ph ph-users-three"></i>
-                        </button>
-                        <button id="btn-config" onclick="abrirModalConfiguracion()" class="text-xl text-slate-400 hover:text-white p-2 rounded-xl hover:bg-[#1e293b] transition-all" title="Configuración">
-                            <i class="ph ph-gear"></i>
-                        </button>
+                    <div class="flex gap-1 text-gray-400">
+                        <button onclick="abrirModalGrupo()" class="p-2 rounded-xl hover:bg-dark-700 hover:text-white transition-all"><i class="ph ph-users-three text-xl"></i></button>
+                        <button onclick="abrirModalConfiguracion()" class="p-2 rounded-xl hover:bg-dark-700 hover:text-white transition-all"><i class="ph ph-gear text-xl"></i></button>
+                    </div>
+                </header>
+
+                <div class="p-3 border-b border-dark-700/50 bg-dark-900">
+                    <div class="flex gap-2">
+                        <input type="text" id="input-buscar" placeholder="Buscar ID..." class="flex-1 bg-dark-800 border border-dark-700 text-xs rounded-lg py-2 px-3 focus:outline-none focus:border-brand-500 text-white transition-all placeholder-gray-500">
+                        <button onclick="buscarAmigo()" class="bg-brand-600 theme-bg text-white text-xs font-semibold py-2 px-3 rounded-lg transition-all active:scale-[0.97]">Abrir</button>
                     </div>
                 </div>
 
-                <div class="p-3 bg-[#131b2e] border-b border-slate-800/40">
-                    <div class="flex flex-col gap-2 bg-[#1e293b] rounded-xl p-2 border border-slate-800 focus-within:border-slate-700 transition-all">
-                        <input type="text" id="input-buscar" placeholder="Buscar amigo o ID de grupo..." class="bg-transparent text-xs w-full focus:outline-none text-white placeholder-slate-500 px-1 py-1">
-                        <button onclick="buscarAmigo()" class="bg-[#3a9cd6] theme-bg text-white text-xs font-medium py-1.5 px-3 rounded-lg w-full transition-all active:scale-[0.99]">Abrir Chat / Unirse</button>
-                    </div>
+                <div class="px-3 py-2 bg-brand-500/5 border-b border-dark-700/50">
+                    <h2 class="text-[10px] font-bold text-gray-400 uppercase mb-1">Notificaciones</h2>
+                    <div id="lista-notificaciones" class="space-y-1 max-h-20 overflow-y-auto"></div>
                 </div>
 
-                <div class="p-3 border-b border-slate-800/30 bg-[#0f172a]/30">
-                    <h2 class="text-[10px] font-bold tracking-wider text-slate-400 uppercase mb-1.5 px-1">Mensajes sin leer</h2>
-                    <div id="lista-notificaciones" class="space-y-1 text-xs max-h-20 overflow-y-auto px-1">
-                        <p class="italic text-slate-500 text-[11px]">Sin avisos pendientes.</p>
-                    </div>
-                </div>
-
-                <div class="flex-1 overflow-y-auto p-2 space-y-1" id="lista-amigos">
-                    <h2 class="text-[10px] font-bold tracking-wider text-slate-400 uppercase p-2">Conversaciones Recientes</h2>
+                <nav class="flex-1 overflow-y-auto p-2" id="lista-amigos">
                     <div id="contenedor-lista-dinamica" class="space-y-1"></div>
-                </div>
-            </div>
+                </nav>
+            </aside>
 
-            <div class="flex-1 flex flex-col bg-[#0f172a]" id="pantalla-chat-vacia">
-                <div class="m-auto text-center max-w-xs px-4">
-                    <div class="text-5xl text-slate-700 mb-3"><i class="ph ph-chat-circle-dots-thin"></i></div>
-                    <h3 class="text-base font-semibold text-slate-300">WasaPedro Cyber Edition</h3>
-                    <p class="text-xs text-slate-500 mt-1.5 leading-relaxed">Whasapp estudiantil compatible con chromebooks institucionales</p>
+            <!-- ÁREA DE CHAT (VACÍA) -->
+            <main class="flex-1 flex flex-col bg-dark-900 relative justify-center items-center" id="pantalla-chat-vacia">
+                <div class="w-20 h-20 bg-dark-800 rounded-full flex items-center justify-center mb-4 shadow-inner border border-dark-700">
+                    <i class="ph ph-paper-plane-tilt text-4xl text-brand-500 theme-text"></i>
                 </div>
-            </div>
+                <h3 class="text-xl font-bold text-white mb-2">WasaPedro Pro</h3>
+                <p class="text-xs text-gray-400">Whasapp estudiantil encriptado de alto rendimiento</p>
+            </main>
 
-            <div class="flex-1 flex flex-col bg-[#0f172a] relative hidden animate-fade-in" id="pantalla-chat-activa">
-                <div id="zona-drop-visual" class="absolute inset-0 bg-[#3a9cd6]/10 border-4 border-dashed border-[#3a9cd6] z-50 flex flex-col items-center justify-center backdrop-blur-sm pointer-events-none transition-all duration-200 opacity-0">
+            <!-- ÁREA DE CHAT (ACTIVA) -->
+            <main class="flex-1 flex flex-col bg-dark-900 relative hidden" id="pantalla-chat-activa">
+                <div id="zona-drop-visual" class="absolute inset-0 bg-brand-500/10 border-2 border-dashed border-brand-500 z-50 flex flex-col items-center justify-center backdrop-blur-sm pointer-events-none transition-all duration-300 opacity-0 md:rounded-r-3xl">
                     <i class="ph ph-cloud-arrow-up text-5xl text-white mb-2 animate-bounce"></i>
-                    <p class="text-sm font-bold text-white">Suelta el archivo para cargarlo</p>
+                    <h2 class="text-xl font-bold text-white">Suelta archivo</h2>
                 </div>
 
-                <div class="p-4 bg-[#1e293b]/60 flex items-center justify-between border-b border-slate-800/50">
+                <header class="px-4 py-3 bg-dark-800/80 backdrop-blur-md border-b border-dark-700 flex items-center justify-between z-20">
                     <div class="flex items-center gap-3">
                         <div class="relative">
-                            <img id="avatar-chat-img" src="" class="w-9 h-9 rounded-full object-cover hidden border border-slate-700">
-                            <div class="w-9 h-9 bg-[#1e293b] text-[#3a9cd6] font-bold rounded-full flex items-center justify-center text-xs border border-slate-700 hidden" id="avatar-chat-txt">?</div>
-                            <span id="dot-presencia-cabecera" class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[#131b2e] hidden"></span>
+                            <img id="avatar-chat-img" src="" class="w-9 h-9 rounded-full object-cover hidden border border-dark-600">
+                            <div class="w-9 h-9 bg-dark-700 text-brand-500 font-bold rounded-full flex items-center justify-center text-sm border border-dark-600 hidden" id="avatar-chat-txt">?</div>
+                            <span id="dot-presencia-cabecera" class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border border-dark-900 hidden"></span>
                         </div>
                         <div>
-                            <span id="nombre-chat-amigo" class="font-semibold text-sm block text-white">...</span>
-                            <span id="sub-chat-info" class="text-[10px] text-slate-400 block hidden"></span>
+                            <span id="nombre-chat-amigo" class="font-bold text-sm block text-white">...</span>
+                            <span id="sub-chat-info" class="text-[10px] text-gray-400 hidden block"></span>
                         </div>
                     </div>
                     
                     <div class="relative">
-                        <button onclick="toggleMenuOpcionesChat()" class="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-[#1e293b] transition-all" title="Opciones de chat">
+                        <button onclick="toggleMenuOpcionesChat()" class="text-gray-400 hover:text-white p-2 rounded-xl hover:bg-dark-700 transition-all">
                             <i class="ph ph-dots-three-vertical text-xl"></i>
                         </button>
-                        <div id="menu-opciones-chat" class="absolute right-0 mt-2 w-48 bg-[#1e293b] border border-slate-800 rounded-xl shadow-2xl hidden z-50 py-1.5 text-xs">
-                            <button id="btn-menu-foto-grupo" onclick="iniciarCambioFotoGrupo()" class="hidden w-full text-left px-4 py-2.5 hover:bg-[#2a3942]/40 text-slate-200 items-center gap-2 text-xs"><i class="ph ph-camera"></i> Cambiar Foto Grupo</button>
-                            <button id="btn-menu-agregar-grupo" onclick="abrirModalAgregarMiembros()" class="hidden w-full text-left px-4 py-2.5 hover:bg-[#2a3942]/40 text-slate-200 items-center gap-2 text-xs"><i class="ph ph-user-plus"></i> Agregar Personas</button>
-                            <button onclick="menuPonerApodo()" class="w-full text-left px-4 py-2.5 hover:bg-[#2a3942]/40 text-slate-200 flex items-center gap-2"><i class="ph ph-pencil"></i> Poner Apodo</button>
-                            <button onclick="menuBorrarChat()" class="w-full text-left px-4 py-2.5 hover:bg-[#2a3942]/40 text-slate-200 flex items-center gap-2"><i class="ph ph-trash"></i> Borrar Chat</button>
-                            <button id="btn-menu-bloquear" onclick="menuBloquearContacto()" class="w-full text-left px-4 py-2.5 hover:bg-[#2a3942]/40 text-slate-200 flex items-center gap-2"><i class="ph ph-prohibit"></i> Bloquear</button>
-                            <hr class="border-slate-800 my-1">
-                            <button onclick="abrirModalReporte()" class="w-full text-left px-4 py-2.5 hover:bg-red-500/10 text-red-400 flex items-center gap-2"><i class="ph ph-warning-octagon"></i> Denunciar</button>
+                        <div id="menu-opciones-chat" class="absolute right-0 mt-1 w-48 bg-dark-800 border border-dark-700 rounded-xl shadow-2xl hidden z-50 py-1.5 text-xs overflow-hidden">
+                            <button id="btn-menu-foto-grupo" onclick="iniciarCambioFotoGrupo()" class="hidden w-full text-left px-4 py-2.5 hover:bg-dark-700 text-gray-200 flex items-center gap-2"><i class="ph ph-camera text-gray-400"></i> Cambiar Foto Grupo</button>
+                            <button id="btn-menu-agregar-grupo" onclick="abrirModalAgregarMiembros()" class="hidden w-full text-left px-4 py-2.5 hover:bg-dark-700 text-gray-200 flex items-center gap-2"><i class="ph ph-user-plus text-gray-400"></i> Invitar Miembros</button>
+                            <button onclick="menuPonerApodo()" class="w-full text-left px-4 py-2.5 hover:bg-dark-700 text-gray-200 flex items-center gap-2"><i class="ph ph-pencil-simple text-gray-400"></i> Asignar Apodo</button>
+                            <button onclick="menuBorrarChat()" class="w-full text-left px-4 py-2.5 hover:bg-dark-700 text-gray-200 flex items-center gap-2"><i class="ph ph-eraser text-gray-400"></i> Limpiar Historial</button>
+                            <button id="btn-menu-bloquear" onclick="menuBloquearContacto()" class="w-full text-left px-4 py-2.5 hover:bg-dark-700 text-gray-200 flex items-center gap-2"><i class="ph ph-prohibit text-red-400"></i> Bloquear Usuario</button>
+                            <div class="h-px bg-dark-700 my-1"></div>
+                            <button onclick="abrirModalReporte()" class="w-full text-left px-4 py-2.5 hover:bg-red-500/10 text-red-400 flex items-center gap-2"><i class="ph ph-warning-octagon"></i> Reportar</button>
                         </div>
                     </div>
-                </div>
+                </header>
                 
                 <div class="flex-1 overflow-y-auto p-4 space-y-3" id="contenedor-mensajes"></div>
                 
-                <div class="p-4 bg-[#131b2e] border-t border-slate-800/40 flex gap-3 items-center relative">
+                <footer class="p-3 bg-dark-800/80 backdrop-blur-md border-t border-dark-700 flex gap-2 items-end z-20">
                     <input type="file" id="input-archivo" class="hidden" onchange="procesarArchivoAdjunto(this.files[0])">
-                    <button onclick="document.getElementById('input-archivo').click()" class="text-xl text-slate-400 hover:text-white transition-all p-1 flex items-center justify-center bg-[#1e293b] rounded-xl w-10 h-10 border border-slate-800 hover:border-slate-700">
-                        <i class="ph ph-paperclip"></i>
+                    <button onclick="document.getElementById('input-archivo').click()" class="text-gray-400 hover:text-white transition-colors p-2.5 bg-dark-700 rounded-xl hover:bg-dark-600 flex-shrink-0">
+                        <i class="ph ph-paperclip text-lg"></i>
                     </button>
-                    <input type="text" id="input-mensaje" placeholder="Escribe un mensaje seguro..." class="flex-1 bg-[#1e293b] border border-slate-800 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-slate-700 transition-all placeholder-slate-500">
-                    <button onclick="enviarMensajeTexto()" class="bg-[#3a9cd6] theme-bg text-white font-medium px-5 py-3 rounded-xl text-sm hover:opacity-95 shadow-md shadow-sky-500/5 transition-all active:scale-[0.97]">Enviar</button>
-                </div>
-            </div>
+                    <div class="flex-1 relative">
+                        <input type="text" id="input-mensaje" placeholder="Escribe un mensaje..." class="w-full bg-dark-900 border border-dark-700 rounded-xl py-2.5 px-3 text-sm text-white focus:outline-none focus:border-brand-500 transition-all placeholder-gray-500">
+                    </div>
+                    <button onclick="enviarMensajeTexto()" class="bg-brand-600 theme-bg hover:opacity-90 text-white p-2.5 rounded-xl transition-all active:scale-[0.95] flex-shrink-0 shadow-lg shadow-brand-500/20">
+                        <i class="ph ph-paper-plane-right text-lg"></i>
+                    </button>
+                </footer>
+            </main>
         </div>
     </div>
 
-    <div id="modal-grupo" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 hidden z-50">
-        <div class="bg-[#131b2e] border border-slate-800 w-full max-w-sm rounded-2xl p-6 shadow-2xl animar-entrada">
-            <h2 class="text-base font-bold text-white mb-2 flex items-center gap-2"><i class="ph ph-users-three text-[#3a9cd6] theme-text"></i> Crear Nuevo Grupo</h2>
-            <p class="text-xs text-slate-400 mb-4 leading-relaxed">Asigna un nombre descriptivo. Como creador tendrás control administrativo total sobre la foto y los miembros.</p>
-            <input type="text" id="input-nombre-grupo" placeholder="Nombre del grupo..." class="w-full bg-[#1e293b] border border-slate-800 text-sm text-white rounded-xl p-3 mb-4 focus:outline-none focus:border-slate-700">
+    <!-- MODALES CON DISEÑO PREMIUM Y FUNCIONALIDAD COMPLETA -->
+
+    <div id="modal-grupo" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-dark-800 border border-dark-700 w-full max-w-sm rounded-3xl p-6 shadow-2xl animar-entrada">
+            <h2 class="text-lg font-bold text-white mb-2 flex items-center gap-2"><i class="ph ph-users-three text-brand-500 theme-text text-xl"></i> Crear Nuevo Grupo</h2>
+            <p class="text-xs text-gray-400 mb-5">Como creador tendrás control administrativo total sobre la foto y los miembros.</p>
+            <input type="text" id="input-nombre-grupo" placeholder="Nombre del grupo..." class="w-full bg-dark-900 border border-dark-700 text-sm text-white rounded-xl p-3 mb-5 focus:outline-none focus:border-brand-500">
             <div class="flex gap-2 justify-end">
-                <button onclick="cerrarModalGrupo()" class="px-4 py-2 text-xs text-slate-400 hover:text-white">Cancelar</button>
-                <button onclick="procesarCrearGrupo()" class="px-5 py-2 text-xs bg-[#3a9cd6] theme-bg text-white font-medium rounded-xl shadow-lg shadow-sky-500/10">Crear</button>
+                <button onclick="cerrarModalGrupo()" class="px-4 py-2 text-xs text-gray-400 hover:text-white rounded-lg hover:bg-dark-700 transition-all">Cancelar</button>
+                <button onclick="procesarCrearGrupo()" class="px-4 py-2 text-xs bg-brand-600 theme-bg text-white font-medium rounded-lg shadow-lg hover:opacity-90">Crear</button>
             </div>
         </div>
     </div>
 
-    <div id="modal-agregar-miembros" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 hidden z-50">
-        <div class="bg-[#131b2e] border border-slate-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl flex flex-col max-h-[80vh] animar-entrada">
-            <h2 class="text-sm font-bold text-white mb-3 flex items-center gap-2"><i class="ph ph-user-plus text-[#3a9cd6] theme-text"></i> Agregar Miembros al Grupo</h2>
-            <p class="text-[11px] text-slate-400 mb-3">Haz clic en añadir para integrar a tus contactos guardados al grupo actual de forma instantánea.</p>
+    <div id="modal-agregar-miembros" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-dark-800 border border-dark-700 w-full max-w-sm rounded-3xl p-5 shadow-2xl flex flex-col max-h-[80vh] animar-entrada">
+            <h2 class="text-sm font-bold text-white mb-2 flex items-center gap-2"><i class="ph ph-user-plus text-brand-500 theme-text"></i> Agregar Miembros al Grupo</h2>
+            <p class="text-[11px] text-gray-400 mb-3">Añade a tus contactos guardados.</p>
             <div class="flex-1 overflow-y-auto space-y-2" id="lista-contactos-para-grupo"></div>
-            <div class="flex justify-end pt-3 border-t border-slate-800 mt-2">
-                <button onclick="document.getElementById('modal-agregar-miembros').classList.add('hidden')" class="px-4 py-2 text-xs text-slate-400 hover:text-white">Finalizar</button>
+            <div class="flex justify-end pt-3 border-t border-dark-700 mt-2">
+                <button onclick="document.getElementById('modal-agregar-miembros').classList.add('hidden')" class="px-4 py-2 text-xs text-gray-400 hover:text-white bg-dark-700 rounded-lg">Finalizar</button>
             </div>
         </div>
     </div>
 
-    <div id="modal-crop" class="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 hidden z-[60]">
-        <div class="bg-[#131b2e] border border-slate-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl flex flex-col animar-entrada">
-            <h2 class="text-xs font-bold text-white mb-4 text-center uppercase tracking-wider">Ajustar Imagen de Perfil</h2>
-            <div id="contenedor-croppie" class="w-full h-64 bg-[#0f172a] rounded-xl overflow-hidden mb-2"></div>
-            <div class="flex gap-3 justify-center pt-3">
-                <button onclick="cancelarRecorte()" class="px-5 py-2 text-xs bg-[#1e293b] text-slate-300 rounded-xl hover:bg-slate-800">Cancelar</button>
-                <button onclick="finalizarRecorte()" class="px-5 py-2 text-xs bg-[#3a9cd6] theme-bg text-white font-medium rounded-xl hover:opacity-95 flex items-center gap-1">
-                    <i class="ph ph-crop"></i> Guardar Imagen
+    <div id="modal-crop" class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 hidden z-[60]">
+        <div class="bg-dark-800 border border-dark-700 w-full max-w-sm rounded-3xl p-5 shadow-2xl flex flex-col animar-entrada">
+            <h2 class="text-xs font-bold text-white mb-4 text-center uppercase tracking-wider text-brand-500 theme-text">Ajustar Imagen</h2>
+            <div id="contenedor-croppie" class="w-full h-64 bg-dark-900 rounded-2xl overflow-hidden mb-3 border border-dark-700"></div>
+            <div class="flex gap-3 justify-center pt-2">
+                <button onclick="cancelarRecorte()" class="px-5 py-2.5 text-xs bg-dark-700 text-gray-300 rounded-xl hover:bg-dark-600 transition-all">Cancelar</button>
+                <button onclick="finalizarRecorte()" class="px-5 py-2.5 text-xs bg-brand-600 theme-bg text-white font-medium rounded-xl hover:opacity-90 flex items-center gap-2 shadow-lg">
+                    <i class="ph ph-crop"></i> Guardar
                 </button>
             </div>
         </div>
     </div>
 
-    <div id="modal-config" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 hidden z-50">
-        <div class="bg-[#131b2e] border border-slate-800 w-full max-w-md rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto animar-entrada">
+    <div id="modal-config" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-dark-800 border border-dark-700 w-full max-w-md rounded-3xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto animar-entrada custom-scrollbar">
             <div class="flex justify-between items-center mb-5">
-                <h2 class="text-base font-bold text-white flex items-center gap-2"><i class="ph ph-gear"></i> Ajustes de Sistema</h2>
-                <button onclick="document.getElementById('modal-config').classList.add('hidden')" class="text-slate-400 hover:text-white text-lg"><i class="ph ph-x"></i></button>
+                <h2 class="text-lg font-bold text-white flex items-center gap-2"><i class="ph ph-gear text-brand-500 theme-text"></i> Ajustes</h2>
+                <button onclick="document.getElementById('modal-config').classList.add('hidden')" class="text-gray-400 hover:text-white bg-dark-700 p-1.5 rounded-lg"><i class="ph ph-x"></i></button>
             </div>
 
-            <div class="mb-5 p-4 bg-[#0f172a]/40 border border-slate-800/80 rounded-xl">
-                <label class="text-[10px] font-bold uppercase tracking-wider text-[#3a9cd6] theme-text block mb-3 flex items-center gap-1">
-                    <i class="ph ph-user-circle-gear text-sm"></i> Cuenta y Credenciales
-                </label>
+            <div class="mb-5 p-4 bg-dark-900 border border-dark-700 rounded-2xl">
+                <label class="text-[10px] font-bold uppercase tracking-wider text-brand-500 theme-text mb-3 flex items-center gap-1"><i class="ph ph-user-circle-gear"></i> Credenciales</label>
                 
-                <div class="flex items-center gap-4 mb-4 bg-[#131b2e] p-3 rounded-xl border border-slate-800">
+                <div class="flex items-center gap-4 mb-4 bg-dark-800 p-3 rounded-xl border border-dark-700">
                     <div class="relative group flex-shrink-0">
-                        <img id="preview-config-avatar" src="" class="w-14 h-14 rounded-full object-cover bg-slate-800 hidden border border-slate-700">
-                        <div id="preview-config-txt" class="w-14 h-14 bg-[#1e293b] text-[#3a9cd6] font-bold text-xl rounded-full flex items-center justify-center hidden border border-slate-700">?</div>
-                        
+                        <img id="preview-config-avatar" src="" class="w-14 h-14 rounded-full object-cover bg-dark-700 hidden border border-dark-600">
+                        <div id="preview-config-txt" class="w-14 h-14 bg-dark-700 text-brand-500 font-bold text-xl rounded-full flex items-center justify-center hidden border border-dark-600">?</div>
                         <label for="input-avatar-file" class="absolute inset-0 bg-black/70 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-all duration-200 text-[9px] text-white text-center font-bold p-1">
                             <i class="ph ph-camera text-sm mb-0.5"></i> Cambiar
                         </label>
                         <input type="file" id="input-avatar-file" class="hidden" accept="image/png, image/jpeg, image/jpg" onchange="iniciarProcesoRecorte(this.files[0])">
                     </div>
                     <div class="flex-1 min-w-0">
-                        <span class="text-[10px] text-slate-500 block">Usuario Activo</span>
+                        <span class="text-[10px] text-gray-500 block">Usuario Activo</span>
                         <span class="text-sm font-semibold text-white truncate block" id="config-nombre-usuario">...</span>
                     </div>
                 </div>
 
                 <div class="space-y-3">
                     <div>
-                        <span class="text-[10px] text-slate-400 block mb-1">Correo para Respaldo Cloud:</span>
+                        <span class="text-[10px] text-gray-400 block mb-1">Correo Respaldo:</span>
                         <div class="flex gap-2">
-                            <input type="email" id="input-cuenta-gmail" placeholder="tu-correo@ejemplo.com" class="flex-1 bg-[#1e293b] border border-slate-800 text-xs p-2 rounded-lg text-white focus:outline-none focus:border-slate-700">
-                            <button onclick="guardarCorreoVinculado()" class="bg-[#1e293b] text-xs text-slate-300 border border-slate-700 px-3 rounded-lg hover:bg-slate-800">Guardar</button>
+                            <input type="email" id="input-cuenta-gmail" placeholder="correo@ejemplo.com" class="flex-1 bg-dark-800 border border-dark-700 text-xs p-2 rounded-lg text-white focus:outline-none focus:border-brand-500">
+                            <button onclick="guardarCorreoVinculado()" class="bg-dark-700 text-xs text-gray-300 px-3 rounded-lg hover:bg-dark-600 transition-all">Guardar</button>
                         </div>
                     </div>
-                    <div class="pt-1 flex flex-wrap gap-2">
-                        <button onclick="subirCopiaNube()" class="flex-1 bg-[#3a9cd6] theme-bg text-white font-medium py-2 px-3 rounded-lg text-xs text-center hover:opacity-95 flex items-center justify-center gap-1">
-                            <i class="ph ph-cloud-arrow-up text-sm"></i> Guardar Respaldo
+                    <div class="pt-1 grid grid-cols-2 gap-2">
+                        <button onclick="subirCopiaNube()" class="col-span-2 bg-brand-600 theme-bg text-white font-medium py-2 rounded-lg text-xs hover:opacity-90 flex items-center justify-center gap-1 shadow-lg">
+                            <i class="ph ph-cloud-arrow-up"></i> Subir Respaldo
                         </button>
-                        <button id="btn-usuarios-admin-view" onclick="abrirModalUsuariosAdmin()" class="hidden bg-purple-600/20 border border-purple-500/30 text-purple-400 font-semibold py-2 px-3 rounded-lg text-xs hover:bg-purple-600 hover:text-white transition-all flex items-center justify-center gap-1">
-                            <i class="ph ph-users text-sm"></i> Usuarios
+                        <button id="btn-usuarios-admin-view" onclick="abrirModalUsuariosAdmin()" class="hidden bg-purple-500/20 text-purple-400 border border-purple-500/30 py-2 rounded-lg text-xs hover:bg-purple-500 hover:text-white transition-all flex items-center justify-center gap-1">
+                            <i class="ph ph-users"></i> Usuarios
                         </button>
-                        <button onclick="abrirModalAdminLogin()" class="bg-yellow-600/10 border border-yellow-600/30 text-yellow-500 font-medium py-2 px-4 rounded-lg text-xs hover:bg-yellow-600 hover:text-white transition-all flex items-center justify-center gap-1">
-                            <i class="ph ph-shield-star text-sm"></i> Consola Admin
+                        <button onclick="abrirModalAdminLogin()" class="bg-yellow-500/20 text-yellow-500 border border-yellow-500/30 py-2 rounded-lg text-xs hover:bg-yellow-500 hover:text-white transition-all flex items-center justify-center gap-1">
+                            <i class="ph ph-shield-star"></i> Admin
                         </button>
-                        <button onclick="cerrarSesionLimpiar()" class="bg-red-500/10 border border-red-500/20 text-red-400 py-2 px-3 rounded-lg text-xs hover:bg-red-500 hover:text-white transition-all">
+                        <button onclick="cerrarSesionLimpiar()" class="col-span-2 bg-red-500/20 text-red-400 border border-red-500/30 py-2 rounded-lg text-xs hover:bg-red-500 hover:text-white transition-all">
                             Cerrar Sesión
                         </button>
                     </div>
-                    <p id="status-cloud" class="text-[10px] italic text-slate-400 text-center h-3"></p>
+                    <p id="status-cloud" class="text-[10px] italic text-brand-400 theme-text text-center h-3"></p>
                 </div>
             </div>
             
             <div class="mb-5">
-                <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2.5">Tonalidad del Sistema</label>
+                <label class="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-2">Color del Tema</label>
                 <div class="grid grid-cols-4 gap-2">
-                    <button onclick="cambiarTema('#3a9cd6')" class="w-full h-9 bg-[#3a9cd6] rounded-lg font-medium text-xs text-white">Celeste</button>
-                    <button onclick="cambiarTema('#2563eb')" class="w-full h-9 bg-[#2563eb] rounded-lg font-medium text-xs text-white">Azul</button>
-                    <button onclick="cambiarTema('#8b5cf6')" class="w-full h-9 bg-[#8b5cf6] rounded-lg font-medium text-xs text-white">Morado</button>
-                    <button onclick="cambiarTema('#64748b')" class="w-full h-9 bg-[#64748b] rounded-lg font-medium text-xs text-white">Gris</button>
+                    <button onclick="cambiarTema('#3b82f6')" class="w-full h-10 bg-[#3b82f6] rounded-xl border-2 border-transparent focus:border-white transition-all shadow-lg"></button>
+                    <button onclick="cambiarTema('#10b981')" class="w-full h-10 bg-[#10b981] rounded-xl border-2 border-transparent focus:border-white transition-all shadow-lg"></button>
+                    <button onclick="cambiarTema('#8b5cf6')" class="w-full h-10 bg-[#8b5cf6] rounded-xl border-2 border-transparent focus:border-white transition-all shadow-lg"></button>
+                    <button onclick="cambiarTema('#f43f5e')" class="w-full h-10 bg-[#f43f5e] rounded-xl border-2 border-transparent focus:border-white transition-all shadow-lg"></button>
                 </div>
             </div>
 
             <div>
-                <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">Lista de Bloqueados</label>
-                <div id="contenedor-bloqueados" class="bg-[#0f172a]/30 border border-slate-800 rounded-xl p-3 max-h-32 overflow-y-auto space-y-1.5"></div>
+                <label class="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-2">Bloqueados</label>
+                <div id="contenedor-bloqueados" class="bg-dark-900 border border-dark-700 rounded-xl p-3 max-h-32 overflow-y-auto space-y-1.5 custom-scrollbar"></div>
             </div>
         </div>
     </div>
 
-    <div id="modal-admin-usuarios" class="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 hidden z-50">
-        <div class="bg-[#131b2e] border border-slate-800 w-full max-w-md h-[75vh] rounded-2xl p-6 shadow-2xl flex flex-col animar-entrada">
-            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-800">
-                <h2 class="text-sm font-bold text-yellow-500 flex items-center gap-2"><i class="ph ph-users"></i> Registro Global de Usuarios</h2>
-                <button onclick="document.getElementById('modal-admin-usuarios').classList.add('hidden')" class="text-slate-400 hover:text-white"><i class="ph ph-x"></i></button>
+    <div id="modal-admin-usuarios" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-dark-800 border border-dark-700 w-full max-w-md h-[75vh] rounded-3xl p-6 shadow-2xl flex flex-col animar-entrada">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b border-dark-700">
+                <h2 class="text-sm font-bold text-yellow-500 flex items-center gap-2"><i class="ph ph-users text-lg"></i> Registro Global</h2>
+                <button onclick="document.getElementById('modal-admin-usuarios').classList.add('hidden')" class="text-gray-400 hover:text-white bg-dark-700 p-1.5 rounded-lg"><i class="ph ph-x"></i></button>
             </div>
-            <div class="flex-1 overflow-y-auto space-y-2" id="lista-usuarios-global-contenedor"></div>
+            <div class="flex-1 overflow-y-auto space-y-2 custom-scrollbar" id="lista-usuarios-global-contenedor"></div>
         </div>
     </div>
 
-    <div id="modal-reporte" class="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 hidden z-[70]">
-        <div class="bg-[#131b2e] border border-slate-800 w-full max-w-sm rounded-2xl p-6 shadow-2xl animar-entrada">
-            <h2 class="text-base font-bold text-red-500 mb-1 flex items-center gap-2">
-                <i class="ph ph-warning-octagon text-lg"></i> Denunciar Conversación
+    <div id="modal-reporte" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-[70]">
+        <div class="bg-dark-800 border border-dark-700 w-full max-w-sm rounded-3xl p-6 shadow-2xl animar-entrada">
+            <h2 class="text-lg font-bold text-red-500 mb-1 flex items-center gap-2">
+                <i class="ph ph-warning-octagon text-xl"></i> Denunciar Usuario
             </h2>
-            <p class="text-xs text-slate-400 mb-4">Reportando a: <strong id="nombre-reportado-txt" class="text-white">...</strong></p>
-            <textarea id="input-motivo-reporte" rows="4" placeholder="Explica detalladamente el motivo de tu denuncia..." class="w-full bg-[#1e293b] border border-slate-800 text-xs text-white rounded-xl p-3 mb-4 focus:outline-none resize-none focus:border-red-500 transition-all"></textarea>
+            <p class="text-xs text-gray-400 mb-4">Reportando a: <strong id="nombre-reportado-txt" class="text-white">...</strong></p>
+            <textarea id="input-motivo-reporte" rows="4" placeholder="Explica el motivo..." class="w-full bg-dark-900 border border-dark-700 text-sm text-white rounded-xl p-3 mb-4 focus:outline-none resize-none focus:border-red-500 transition-all"></textarea>
             <div class="flex gap-2 justify-end">
-                <button onclick="cerrarModalReporte()" class="px-4 py-2 text-xs text-slate-400 hover:text-white">Cancelar</button>
-                <button onclick="enviarReporte()" class="px-4 py-2 text-xs bg-red-600 text-white font-medium rounded-xl hover:bg-red-700">Enviar Reporte</button>
+                <button onclick="cerrarModalReporte()" class="px-4 py-2 text-xs text-gray-400 hover:text-white hover:bg-dark-700 rounded-lg transition-all">Cancelar</button>
+                <button onclick="enviarReporte()" class="px-4 py-2 text-xs bg-red-600 text-white font-medium rounded-lg hover:bg-red-500 shadow-lg shadow-red-500/20">Enviar Reporte</button>
             </div>
         </div>
     </div>
 
-    <div id="modal-admin-login" class="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 hidden z-[70]">
-        <div class="bg-[#131b2e] border border-yellow-600/50 w-full max-w-xs rounded-2xl p-6 shadow-2xl text-center animar-entrada">
-            <i class="ph ph-shield-star text-4xl text-yellow-500 mb-1"></i>
-            <h2 class="text-sm font-bold text-white mb-3">Seguridad de Administración</h2>
-            <input type="password" id="input-admin-pass" placeholder="Introduce la contraseña..." class="w-full bg-[#1e293b] border border-slate-800 text-xs text-white rounded-xl p-3 mb-4 focus:outline-none text-center focus:border-yellow-500">
+    <div id="modal-admin-login" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-[70]">
+        <div class="bg-dark-800 border border-yellow-500/30 w-full max-w-xs rounded-3xl p-6 shadow-2xl text-center animar-entrada">
+            <i class="ph ph-shield-star text-5xl text-yellow-500 mb-2 drop-shadow-[0_0_15px_rgba(234,179,8,0.5)]"></i>
+            <h2 class="text-sm font-bold text-white mb-4">Acceso Administrador</h2>
+            <input type="password" id="input-admin-pass" placeholder="Contraseña..." class="w-full bg-dark-900 border border-dark-700 text-sm text-white rounded-xl p-3 mb-5 focus:outline-none text-center focus:border-yellow-500 transition-all">
             <div class="flex gap-2 justify-center">
-                <button onclick="document.getElementById('modal-admin-login').classList.add('hidden')" class="px-4 py-2 text-xs text-slate-400 hover:text-white">Cancelar</button>
-                <button onclick="verificarAdmin()" class="px-4 py-2 text-xs bg-yellow-600 text-white font-medium rounded-xl hover:bg-yellow-500">Acceder</button>
+                <button onclick="document.getElementById('modal-admin-login').classList.add('hidden')" class="px-4 py-2 text-xs text-gray-400 hover:text-white bg-dark-700 rounded-lg">Cancelar</button>
+                <button onclick="verificarAdmin()" class="px-4 py-2 text-xs bg-yellow-500 text-dark-900 font-bold rounded-lg hover:bg-yellow-400 shadow-lg shadow-yellow-500/30">Acceder</button>
             </div>
         </div>
     </div>
 
     <script>
-        // COMPROBACIÓN INMEDIATA ANTI-VETO ANTES DE LEVANTAR LA UI
+        // COMPROBACIÓN INMEDIATA ANTI-VETO
         let estatusDeBanLocal = JSON.parse(localStorage.getItem("wasapedro_ban_status")) || null;
         if (estatusDeBanLocal) {
             mostrarPantallaBanAbsoluto(estatusDeBanLocal.tipo, estatusDeBanLocal.razon);
@@ -328,7 +357,7 @@
         let clienteMqtt = null;
         let chatActivo = null;
         let instanciaCroppie = null; 
-        let destinoRecorte = "usuario"; // "usuario" o "grupo"
+        let destinoRecorte = "usuario"; 
         
         let listaAmigosActivos = JSON.parse(localStorage.getItem("wasapedro_amigos_list")) || [];
         let historialesDeChats = JSON.parse(localStorage.getItem("wasapedro_historiales")) || {};
@@ -343,7 +372,7 @@
         let reintentosMqttSeguidos = 0;
         let registrosPresenciaAmigos = {}; 
         let notificacionesPendientes = JSON.parse(localStorage.getItem("wasapedro_notif_pendientes")) || {};
-        let temaActual = localStorage.getItem("wasapedro_theme_color") || "#3a9cd6";
+        let temaActual = localStorage.getItem("wasapedro_theme_color") || "#3b82f6";
 
         let esAdmin = localStorage.getItem("wasapedro_is_admin") === "true";
         let reportesRecibidos = JSON.parse(localStorage.getItem("wasapedro_reportes")) || [];
@@ -376,13 +405,13 @@
             const ind = document.getElementById("indicador-conexion");
             if (!ind) return;
             if (estado === "conectado") {
-                ind.className = "text-[10px] font-medium text-green-400 flex items-center gap-1";
+                ind.className = "text-[10px] font-medium text-green-400 flex items-center gap-1 mt-0.5";
                 ind.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span> Conectado';
             } else if (estado === "conectando") {
-                ind.className = "text-[10px] font-medium text-yellow-500 flex items-center gap-1";
+                ind.className = "text-[10px] font-medium text-yellow-500 flex items-center gap-1 mt-0.5";
                 ind.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-yellow-500 inline-block animate-pulse"></span> Conectando...';
             } else {
-                ind.className = "text-[10px] font-medium text-red-400 flex items-center gap-1";
+                ind.className = "text-[10px] font-medium text-red-400 flex items-center gap-1 mt-0.5";
                 ind.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-red-500 inline-block"></span> Desconectado';
             }
         }
@@ -513,6 +542,7 @@
 
             if (nombreIngresado.length < 2) return alert("Nombre muy corto.");
             btn.disabled = true;
+            btn.innerHTML = '<i class="ph ph-spinner-gap animate-spin text-xl"></i> Conectando...';
             txtError.classList.add("hidden");
             verificarNombreLibreYRegistrar(nombreIngresado, emailRecuperar, btn, txtError);
         });
@@ -535,6 +565,7 @@
                 clienteValidacion.unsubscribe(subCanal);
                 if (nombreOcupado) {
                     btn.disabled = false;
+                    btn.innerHTML = 'Ingresar al Sistema';
                     txtError.classList.remove("hidden");
                 } else {
                     miNombre = nombre;
@@ -633,7 +664,6 @@
                         return;
                     }
 
-                    // RECEPCIÓN DE FORZADO DE INVITACIÓN DIRECTA A GRUPOS
                     if (topico === `wasapedro/v3/chat/${miNombre}` && data.tipoSist === "invitacion_grupo") {
                         let idG = data.idGrupo;
                         if (!datosGrupos[idG]) {
@@ -647,7 +677,6 @@
                         return;
                     }
 
-                    // INTERCEPTAR ACTUALIZACIÓN MULTICAST DE FOTO DE GRUPO
                     if (topico.includes("/grupo/") && data.esCambioFoto) {
                         let idG = topico.split("/").pop();
                         if (datosGrupos[idG]) {
@@ -768,7 +797,7 @@
                 btnBloquear.classList.add("hidden");
             } else {
                 btnBloquear.classList.remove("hidden");
-                btnBloquear.innerHTML = listaBloqueados.includes(id) ? '<i class="ph ph-check-circle"></i> Desbloquear' : '<i class="ph ph-prohibit"></i> Bloquear';
+                btnBloquear.innerHTML = listaBloqueados.includes(id) ? '<i class="ph ph-check-circle text-green-400"></i> Desbloquear Usuario' : '<i class="ph ph-prohibit text-red-400"></i> Bloquear Usuario';
             }
 
             renderizarFotoCabeceraChat(id);
@@ -790,8 +819,7 @@
                     imgAvatar.classList.remove("hidden");
                 } else {
                     imgAvatar.classList.add("hidden");
-                    txtAvatar.innerHTML = '<i class="ph ph-users-three text-sm"></i>';
-                    txtAvatar.className = "w-9 h-9 bg-[#1e293b] text-[#3a9cd6] font-bold rounded-full flex items-center justify-center text-xs border border-slate-700";
+                    txtAvatar.innerHTML = '<i class="ph ph-users-three text-lg"></i>';
                     txtAvatar.classList.remove("hidden");
                 }
                 dotCabecera.classList.add("hidden");
@@ -803,7 +831,6 @@
                 } else {
                     imgAvatar.classList.add("hidden");
                     txtAvatar.textContent = nombreMostrar.charAt(0).toUpperCase();
-                    txtAvatar.className = "w-9 h-9 bg-[#1e293b] text-[#3a9cd6] font-bold rounded-full flex items-center justify-center text-xs border border-slate-700";
                     txtAvatar.classList.remove("hidden");
                 }
                 
@@ -855,27 +882,27 @@
             lista.forEach(m => {
                 const soyYo = m.emisor === miNombre;
                 const d = document.createElement("div");
-                d.className = `flex flex-col max-w-[70%] ${soyYo ? 'ml-auto items-end' : 'mr-auto items-start'} mb-1.5 transition-all`;
+                d.className = `flex flex-col max-w-[75%] md:max-w-[65%] ${soyYo ? 'ml-auto items-end' : 'mr-auto items-start'} mb-2 transition-all`;
                 
                 let cuerpo = "";
                 if(!soyYo && datosGrupos[chatActivo]) {
-                    cuerpo += `<span class="text-[10px] text-slate-400 font-semibold mb-0.5 px-1">~${m.emisor || "Usuario"}</span>`;
+                    cuerpo += `<span class="text-[10px] text-gray-400 font-semibold mb-1 px-1">~${m.emisor || "Usuario"}</span>`;
                 }
                 
                 let estiloBubble = soyYo ? `style="background-color: ${temaActual}; color: #ffffff;"` : '';
-                cuerpo += `<div ${estiloBubble} class="p-3 rounded-2xl text-xs relative shadow-sm ${soyYo ? 'font-medium rounded-tr-none' : 'bg-[#1e293b] text-slate-100 rounded-tl-none border border-slate-800/40'}">`;
+                cuerpo += `<div ${estiloBubble} class="p-3.5 rounded-2xl text-sm relative shadow-md ${soyYo ? 'font-medium rounded-br-sm' : 'bg-dark-800 text-gray-100 rounded-bl-sm border border-dark-700'}">`;
                 
                 if(m.archivoB64) {
-                    if(m.tipoArchivo?.startsWith("image/")) cuerpo += `<img src="${m.archivoB64}" class="max-w-xs rounded-xl mb-1 border border-black/10">`;
-                    else cuerpo += `<a href="${m.archivoB64}" download="${m.nombreArchivo}" class="underline text-sky-400 font-medium block mb-1 flex items-center gap-1"><i class="ph ph-file-arrow-down text-sm"></i> ${m.nombreArchivo || 'Archivo adjunto'}</a>`;
+                    if(m.tipoArchivo?.startsWith("image/")) cuerpo += `<img src="${m.archivoB64}" class="max-w-[200px] md:max-w-xs rounded-xl mb-2 border border-black/20 shadow-sm">`;
+                    else cuerpo += `<a href="${m.archivoB64}" download="${m.nombreArchivo}" class="underline text-blue-300 font-medium block mb-2 flex items-center gap-1.5 p-2 bg-black/10 rounded-lg"><i class="ph ph-file-arrow-down text-lg"></i> ${m.nombreArchivo || 'Archivo adjunto'}</a>`;
                 }
                 if(m.texto) cuerpo += `<p class="break-all leading-relaxed">${m.texto}</p>`;
                 
                 if (soyYo) {
                     const iconoEstado = m.enviado 
-                        ? '<i class="ph ph-checks text-white/80 ml-1 text-xs"></i>' 
-                        : '<i class="ph ph-clock text-white/50 ml-1 text-xs animate-spin"></i>';
-                    cuerpo += `<div class="text-right block text-[8px] opacity-60 mt-0.5">${iconoEstado}</div>`;
+                        ? '<i class="ph ph-checks text-white/80 ml-1 text-sm"></i>' 
+                        : '<i class="ph ph-clock text-white/50 ml-1 text-sm animate-spin"></i>';
+                    cuerpo += `<div class="text-right block text-[10px] opacity-70 mt-1 flex justify-end items-center gap-1">${iconoEstado}</div>`;
                 }
                 cuerpo += `</div>`;
                 
@@ -904,21 +931,21 @@
                 let dotHtml = '';
                 if (!esGrupo) {
                     let dotColor = estado === 'conectado' ? "bg-green-500" : "bg-red-500";
-                    dotHtml = `<span class="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#131b2e] ${dotColor}"></span>`;
+                    dotHtml = `<span class="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-dark-900 ${dotColor}"></span>`;
                 }
 
-                div.className = `p-2.5 mx-1 flex items-center gap-3 rounded-xl cursor-pointer hover:bg-[#1e293b]/40 border border-transparent transition-all duration-200 active:scale-[0.99] ${chatActivo === id ? 'bg-[#1e293b]/80 border-slate-800' : ''}`;
+                div.className = `p-3 mx-1 flex items-center gap-3 rounded-2xl cursor-pointer hover:bg-dark-800 border border-transparent transition-all duration-200 active:scale-[0.98] ${chatActivo === id ? 'bg-dark-800 border-dark-700 shadow-inner' : ''}`;
                 div.onclick = () => abrirChat(id);
                 
                 div.innerHTML = `
                     <div class="relative flex-shrink-0">
-                        <div class="w-10 h-10 bg-[#1e293b] rounded-full flex items-center justify-center font-bold text-xs text-[#3a9cd6] overflow-hidden border border-slate-800">
-                            ${esGrupo ? (tieneFoto ? `<img src="${tieneFoto}" class="w-full h-full object-cover">` : '<i class="ph ph-users-three text-base"></i>') : (tieneFoto ? `<img src="${tieneFoto}" class="w-full h-full object-cover">` : nombre.charAt(0).toUpperCase())}
+                        <div class="w-12 h-12 bg-dark-800 rounded-full flex items-center justify-center font-bold text-sm text-brand-500 overflow-hidden border border-dark-700 shadow-sm">
+                            ${esGrupo ? (tieneFoto ? `<img src="${tieneFoto}" class="w-full h-full object-cover">` : '<i class="ph ph-users-three text-xl"></i>') : (tieneFoto ? `<img src="${tieneFoto}" class="w-full h-full object-cover">` : nombre.charAt(0).toUpperCase())}
                         </div>
                         ${dotHtml}
                     </div>
                     <div class="flex-1 min-w-0">
-                        <span class="text-xs font-semibold text-slate-200 block truncate">${nombre}</span>
+                        <span class="text-sm font-semibold text-gray-200 block truncate">${nombre}</span>
                     </div>
                 `;
                 contenedor.appendChild(div);
@@ -937,14 +964,14 @@
             cont.innerHTML = "";
             let llaves = Object.keys(notificacionesPendientes);
             if(llaves.length === 0) {
-                cont.innerHTML = `<p class="italic text-slate-500 text-[11px]">Sin avisos pendientes.</p>`;
+                cont.innerHTML = `<p class="italic text-gray-500 text-xs py-1">Ninguna notificación.</p>`;
                 return;
             }
             llaves.forEach(k => {
                 let p = document.createElement("p");
-                p.className = "bg-[#1e293b] border border-slate-800/60 p-1.5 px-2 rounded-lg flex justify-between cursor-pointer text-sky-400 font-medium text-[11px] hover:border-slate-700 transition-all";
+                p.className = "bg-dark-800 border border-dark-700 p-2 rounded-xl flex justify-between items-center cursor-pointer text-brand-400 font-medium text-xs hover:border-brand-500/50 transition-all shadow-sm";
                 p.onclick = () => abrirChat(k);
-                p.innerHTML = `<span>@${k}</span> <span class="bg-[#3a9cd6] text-white px-1.5 rounded-full text-[9px] font-bold flex items-center">${notificacionesPendientes[k]}</span>`;
+                p.innerHTML = `<span>@${k}</span> <span class="bg-brand-500 text-white w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center shadow-lg shadow-brand-500/30">${notificacionesPendientes[k]}</span>`;
                 cont.appendChild(p);
             });
         }
@@ -956,11 +983,10 @@
             const esGrupo = datosGrupos[chatActivo];
             const soyCreador = esGrupo && datosGrupos[chatActivo].creador === miNombre;
             
-            document.getElementById("btn-menu-foto-grupo").className = soyCreador ? "w-full text-left px-4 py-2.5 hover:bg-[#2a3942]/40 text-slate-200 flex items-center gap-2 text-xs" : "hidden";
-            document.getElementById("btn-menu-agregar-grupo").className = soyCreador ? "w-full text-left px-4 py-2.5 hover:bg-[#2a3942]/40 text-slate-200 flex items-center gap-2 text-xs" : "hidden";
+            document.getElementById("btn-menu-foto-grupo").className = soyCreador ? "w-full text-left px-4 py-2.5 hover:bg-dark-700 text-gray-200 flex items-center gap-2" : "hidden";
+            document.getElementById("btn-menu-agregar-grupo").className = soyCreador ? "w-full text-left px-4 py-2.5 hover:bg-dark-700 text-gray-200 flex items-center gap-2" : "hidden";
         }
 
-        // CONTROL DE AGREGAR MIEMBROS SIN ID MANUAL
         function abrirModalAgregarMiembros() {
             document.getElementById("menu-opciones-chat").classList.add("hidden");
             document.getElementById("modal-agregar-miembros").classList.remove("hidden");
@@ -970,7 +996,7 @@
             
             let contactosDirectos = listaAmigosActivos.filter(id => !datosGrupos[id]);
             if(contactosDirectos.length === 0) {
-                cont.innerHTML = `<p class="text-xs text-slate-500 italic text-center py-4">No tienes chats directos guardados.</p>`;
+                cont.innerHTML = `<p class="text-xs text-gray-500 italic text-center py-4">No tienes chats directos.</p>`;
                 return;
             }
             
@@ -978,18 +1004,18 @@
                 const nombre = apodosContactos[c] || c;
                 const foto = fotosAmigos[c];
                 const div = document.createElement("div");
-                div.className = "flex items-center justify-between p-2.5 bg-[#1e293b]/60 border border-slate-800 rounded-xl text-xs shadow-inner";
+                div.className = "flex items-center justify-between p-3 bg-dark-900 border border-dark-700 rounded-xl text-xs";
                 
                 let avatarHtml = foto 
-                    ? `<img src="${foto}" class="w-7 h-7 rounded-full object-cover">` 
-                    : `<div class="w-7 h-7 bg-[#1e293b] rounded-full flex items-center justify-center text-sky-400 font-bold">${nombre.charAt(0).toUpperCase()}</div>`;
+                    ? `<img src="${foto}" class="w-8 h-8 rounded-full object-cover">` 
+                    : `<div class="w-8 h-8 bg-dark-800 rounded-full flex items-center justify-center text-brand-500 font-bold border border-dark-700">${nombre.charAt(0).toUpperCase()}</div>`;
                 
                 div.innerHTML = `
-                    <div class="flex items-center gap-2 min-w-0">
+                    <div class="flex items-center gap-3 min-w-0">
                         ${avatarHtml}
-                        <span class="font-medium text-slate-200 truncate">@${c}</span>
+                        <span class="font-medium text-gray-200 truncate">@${c}</span>
                     </div>
-                    <button onclick="invitarContactoAGrupoDirecto('${c}', this)" class="bg-[#3a9cd6] theme-bg text-white px-3 py-1 rounded-lg text-[11px] font-semibold transition-all active:scale-[0.97]">Añadir</button>
+                    <button onclick="invitarContactoAGrupoDirecto('${c}', this)" class="bg-brand-600 theme-bg hover:opacity-90 text-white px-4 py-1.5 rounded-lg font-semibold transition-all shadow-md">Añadir</button>
                 `;
                 cont.appendChild(div);
             });
@@ -1001,25 +1027,19 @@
             let infoG = datosGrupos[idG];
             
             let payloadInvitacion = {
-                tipoSist: "invitacion_grupo",
-                idGrupo: idG,
-                nombreGrupo: infoG.nombre,
-                creador: infoG.creador,
-                fotoGrupo: infoG.foto || "",
-                emisor: miNombre
+                tipoSist: "invitacion_grupo", idGrupo: idG, nombreGrupo: infoG.nombre, creador: infoG.creador, fotoGrupo: infoG.foto || "", emisor: miNombre
             };
             
             if(clienteMqtt && clienteMqtt.connected) {
                 clienteMqtt.publish(`wasapedro/v3/chat/${contacto}`, JSON.stringify(payloadInvitacion), { qos: 1 });
                 boton.textContent = "Añadido ✓";
                 boton.disabled = true;
-                boton.className = "bg-green-600/20 text-green-400 border border-green-500/20 px-2.5 py-1 rounded-lg text-[11px] cursor-not-allowed font-medium";
+                boton.className = "bg-green-500/20 text-green-400 border border-green-500/30 px-3 py-1.5 rounded-lg cursor-not-allowed font-medium";
             } else {
                 alert("Sin conexión.");
             }
         }
 
-        // VER PANEL GLOBAL DE USUARIOS REGISTRADOS
         function abrirModalUsuariosAdmin() {
             document.getElementById("modal-config").classList.add("hidden");
             document.getElementById("modal-admin-usuarios").classList.remove("hidden");
@@ -1033,17 +1053,17 @@
             let usuarios = Object.values(registroGlobal);
             
             if(usuarios.length === 0) {
-                cont.innerHTML = `<p class="text-xs text-slate-500 italic text-center mt-10">Ningún usuario registrado en la red aún.</p>`;
+                cont.innerHTML = `<p class="text-xs text-gray-500 italic text-center mt-10">Ningún usuario registrado aún.</p>`;
                 return;
             }
             
             usuarios.forEach(u => {
                 const div = document.createElement("div");
-                div.className = "p-3 bg-[#1e293b] rounded-xl border border-slate-800 flex items-center justify-between gap-3 text-xs";
+                div.className = "p-3 bg-dark-900 rounded-xl border border-dark-700 flex items-center justify-between gap-3 text-xs";
                 
                 let avatarHtml = u.foto 
                     ? `<img src="${u.foto}" class="w-8 h-8 rounded-full object-cover">` 
-                    : `<div class="w-8 h-8 bg-[#131b2e] rounded-full flex items-center justify-center font-bold text-sky-400 border border-slate-700">${u.usuario.charAt(0).toUpperCase()}</div>`;
+                    : `<div class="w-8 h-8 bg-dark-800 rounded-full flex items-center justify-center font-bold text-brand-500 border border-dark-700">${u.usuario.charAt(0).toUpperCase()}</div>`;
                 
                 div.innerHTML = `
                     <div class="flex items-center gap-2 min-w-0">
@@ -1051,8 +1071,8 @@
                         <span class="font-semibold text-white truncate">@${u.usuario}</span>
                     </div>
                     <div class="flex gap-1.5 flex-shrink-0">
-                        <button onclick="ejecutarBaneoGlobal('${u.usuario}', 'Baneado')" class="bg-yellow-600/20 border border-yellow-600/30 text-yellow-500 font-medium py-1 px-2.5 rounded-lg text-[10px] hover:bg-yellow-600 hover:text-white transition-all">Banear</button>
-                        <button onclick="ejecutarBaneoGlobal('${u.usuario}', 'Permabaneado')" class="bg-red-600/20 border border-red-600/30 text-red-400 font-medium py-1 px-2.5 rounded-lg text-[10px] hover:bg-red-600 hover:text-white transition-all">Permabanear</button>
+                        <button onclick="ejecutarBaneoGlobal('${u.usuario}', 'Baneado')" class="bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500 hover:text-dark-900 font-medium py-1.5 px-3 rounded-lg transition-all">Banear</button>
+                        <button onclick="ejecutarBaneoGlobal('${u.usuario}', 'Permabaneado')" class="bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white font-medium py-1.5 px-3 rounded-lg transition-all">Permaban</button>
                     </div>
                 `;
                 cont.appendChild(div);
@@ -1065,7 +1085,6 @@
             if (razon && razon.trim() !== "") {
                 if(clienteMqtt && clienteMqtt.connected) {
                     let payloadBan = { tipo: tipo, razon: razon.trim(), usuarioBaneado: usuarioTarget };
-                    // Publicar con RETAIN para que impacte de forma fija e inmediata en el broker
                     clienteMqtt.publish(`wasapedro/v3/sistema/bans/${usuarioTarget}`, JSON.stringify(payloadBan), { qos: 1, retain: true });
                     alert(`Acción ${tipo} enviada con éxito para @${usuarioTarget}`);
                 } else {
@@ -1099,7 +1118,7 @@
         function menuBorrarChat() {
             document.getElementById("menu-opciones-chat").classList.add("hidden");
             if (!chatActivo) return;
-            if (confirm("¿Borrar el historial local de este chat?")) {
+            if (confirm("¿Borrar el historial de este chat?")) {
                 historialesDeChats[chatActivo] = [];
                 localStorage.setItem("wasapedro_historiales", JSON.stringify(historialesDeChats));
                 renderizarMensajes();
@@ -1127,13 +1146,13 @@
             if (!cont) return;
             cont.innerHTML = "";
             if (listaBloqueados.length === 0) {
-                cont.innerHTML = '<p class="text-[11px] text-slate-500 italic">No hay contactos bloqueados.</p>';
+                cont.innerHTML = '<p class="text-xs text-gray-500 italic">No tienes contactos bloqueados.</p>';
                 return;
             }
             listaBloqueados.forEach(b => {
                 const div = document.createElement("div");
-                div.className = "flex justify-between items-center bg-[#1e293b] p-2 rounded-lg border border-slate-800 text-[11px]";
-                div.innerHTML = `<span>@${b}</span> <button onclick="desbloquearDirecto('${b}')" class="text-red-400 hover:text-red-500 font-medium">Desbloquear</button>`;
+                div.className = "flex justify-between items-center bg-dark-800 p-2.5 rounded-xl border border-dark-700 text-xs";
+                div.innerHTML = `<span>@${b}</span> <button onclick="desbloquearDirecto('${b}')" class="text-red-400 hover:text-red-300 font-bold">Desbloquear</button>`;
                 cont.appendChild(div);
             });
         }
@@ -1173,7 +1192,7 @@
                 clienteMqtt.publish(`wasapedro/v3/backup/${btoa(gmailVinculado)}`, JSON.stringify({
                     usuario: miNombre, payload: JSON.stringify(paquete)
                 }), { retain: true });
-                document.getElementById("status-cloud").textContent = "Copia guardada en Nube ✓";
+                document.getElementById("status-cloud").textContent = "Copia guardada en la Nube ✓";
             }
         }
         function cerrarSesionLimpiar() {
@@ -1245,7 +1264,7 @@
 
             if (clienteMqtt && clienteMqtt.connected) {
                 clienteMqtt.publish(`wasapedro/v3/sistema/reportes`, JSON.stringify(reporte));
-                alert("Denuncia enviada.");
+                alert("Denuncia enviada exitosamente.");
                 cerrarModalReporte();
             }
         }
