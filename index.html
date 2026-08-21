@@ -254,18 +254,39 @@
             <span id="tiempo-llamada" class="text-xs font-mono text-gray-400">00:00</span>
         </div>
 
-        <div class="flex-1 relative p-4 flex items-center justify-center bg-black/40">
+        <div class="flex-1 relative p-4 flex items-center justify-center bg-black/40 overflow-hidden">
+            <!-- Overlay de Espera / Llamando... -->
+            <div id="overlay-espera-llamada" class="absolute inset-0 z-30 bg-dark-900/95 flex flex-col items-center justify-center gap-3 p-4">
+                <img id="foto-espera-llamada" src="" class="w-32 h-32 rounded-full object-cover border-4 border-brand-500 shadow-2xl hidden">
+                <div id="avatar-txt-espera-llamada" class="w-32 h-32 bg-dark-700 text-brand-500 font-bold text-5xl rounded-full flex items-center justify-center border-4 border-brand-500 shadow-2xl hidden">?</div>
+                <h3 id="nombre-espera-llamada" class="text-white text-lg font-bold">...</h3>
+                <span id="texto-estado-llamada" class="text-brand-400 text-sm font-medium animate-pulse">Llamando...</span>
+            </div>
+
             <!-- Video Remoto (Principal) -->
-            <video id="video-remoto" autoplay playsinline class="w-full h-full max-h-[75vh] object-contain rounded-2xl bg-dark-800 border border-dark-700 shadow-2xl"></video>
+            <div id="box-video-principal" class="relative w-full h-full max-h-[75vh] flex items-center justify-center rounded-2xl bg-dark-800 border border-dark-700 shadow-2xl overflow-hidden">
+                <video id="video-remoto" autoplay playsinline class="w-full h-full object-contain"></video>
+                <!-- Fallback foto de perfil cuando video remoto apague cámara -->
+                <div id="fallback-foto-remoto" class="absolute inset-0 bg-dark-800 flex flex-col items-center justify-center gap-2 hidden z-10">
+                    <img id="img-fallback-remoto" src="" class="w-28 h-28 rounded-full object-cover border-2 border-dark-600 hidden">
+                    <div id="txt-fallback-remoto" class="w-28 h-28 bg-dark-700 text-brand-500 font-bold text-3xl rounded-full flex items-center justify-center border border-dark-600 hidden">?</div>
+                    <span id="label-fallback-remoto" class="text-gray-300 text-xs font-semibold">Cámara apagada</span>
+                </div>
+            </div>
             
             <!-- Video Local (Miniatura flotante estilo Meet) -->
-            <div class="absolute bottom-6 right-6 w-36 h-48 md:w-48 md:h-64 rounded-2xl overflow-hidden border-2 border-brand-500 shadow-2xl bg-dark-800">
+            <div id="box-video-local" class="absolute bottom-6 right-6 w-36 h-48 md:w-48 md:h-64 rounded-2xl overflow-hidden border-2 border-brand-500 shadow-2xl bg-dark-800 z-20">
                 <video id="video-local" autoplay playsinline muted class="w-full h-full object-cover"></video>
+                <!-- Fallback foto de perfil cuando mi cámara esté apagada -->
+                <div id="fallback-foto-local" class="absolute inset-0 bg-dark-800 flex flex-col items-center justify-center hidden z-10">
+                    <img id="img-fallback-local" src="" class="w-16 h-16 rounded-full object-cover border border-dark-600 hidden">
+                    <div id="txt-fallback-local" class="w-16 h-16 bg-dark-700 text-brand-500 font-bold text-xl rounded-full flex items-center justify-center border border-dark-600 hidden">?</div>
+                </div>
             </div>
         </div>
 
         <!-- Controles estilo Google Meet -->
-        <div class="p-6 bg-dark-800/90 border-t border-dark-700 flex justify-center items-center gap-6">
+        <div class="p-6 bg-dark-800/90 border-t border-dark-700 flex justify-center items-center gap-6 z-30">
             <button id="btn-toggle-mic" onclick="toggleMicrofonoLlamada()" class="w-12 h-12 rounded-full bg-dark-700 text-white flex items-center justify-center hover:bg-dark-600 transition-all">
                 <i id="icono-mic" class="ph ph-microphone text-xl"></i>
             </button>
@@ -471,7 +492,7 @@
 
         const URL_SERVIDOR_MESSENGER = 'wss://broker.emqx.io:8084/mqtt';
 
-        // --- NUEVAS VARIABLES: PeerJS (Videollamada) y Audio ---
+        // --- NUEVAS VARIABLES: PeerJS (Videollamada), Audio y Control de Llamadas Mejorado ---
         let peerInstance = null;
         let miPeerId = "";
         let llamadaPeer = null;
@@ -480,9 +501,19 @@
         let fragmentosAudio = [];
         let estaGrabandoAudio = false;
 
+        // Variables de estado de llamada
+        let participantesLlamada = [];
+        let esLlamadaGrupal = false;
+        let llamadaEnCurso = false;
+        let llamadaContestada = false;
+        let miCamaraActiva = true;
+        let miMicActivo = true;
+        let intervaloTiempoLlamada = null;
+        let segundosLlamada = 0;
+
         const MOCK_GIFS = [
             "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3Z2bzVsZzlycG9xZnA4ZnhxcnQxbnhic2dndHk1bWhreWJibzBxbSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l3vR1v8Ldt7L8F83C/giphy.gif",
-            "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3Y1b250cW0wYmdyazM0dWJremlmZnA5eTNldDRrc3l4NXA2czdrZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/26u4cqiYI30juCOGY/giphy.gif",
+            "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3V2bzVsZzlycG9xZnA4ZnhxcnQxbnhic2dndHk1bWhreWJibzBxbSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/26u4cqiYI30juCOGY/giphy.gif",
             "https://media.giphy.com/media/3o7TKsjR91mP3Rgz1m/giphy.gif"
         ];
         const MOCK_STICKERS = [
@@ -557,7 +588,7 @@
             }
         }
 
-        // --- NUEVAS FUNCIONES: Emojis, Audio, Media & PeerJS ---
+        // --- NUEVAS FUNCIONES: Emojis, Audio, Media ---
         
         function inicializarEmojiPicker() {
             const picker = document.getElementById('picker-emoji');
@@ -663,65 +694,222 @@
             procesarColaDeEnvios();
         }
 
-        // --- SISTEMA DE VIDEOLLAMADAS WEBRTC (PeerJS) ---
+        // --- SISTEMA DE VIDEOLLAMADAS MEJORADO (PeerJS + MQTT) ---
         function inicializarPeerJS() {
             miPeerId = "wasapedro_peer_" + miNombre;
             peerInstance = new Peer(miPeerId);
 
             peerInstance.on('call', async (call) => {
-                if (confirm(`📞 ¡Llamada entrante de videollamada!`)) {
-                    llamadaPeer = call;
-                    streamLocal = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                    document.getElementById("video-local").srcObject = streamLocal;
-                    document.getElementById("modal-videollamada").classList.remove("hidden");
+                llamadaPeer = call;
+                if (!llamadaEnCurso) {
+                    if (!confirm(`📞 ¡Llamada entrante de videollamada!`)) return;
+                    try {
+                        streamLocal = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                        document.getElementById("video-local").srcObject = streamLocal;
+                        document.getElementById("modal-videollamada").classList.remove("hidden");
+                        llamadaEnCurso = true;
+                    } catch(e) {
+                        return alert("No se pudo obtener acceso a cámara/micrófono.");
+                    }
+                }
+                call.answer(streamLocal);
+                vincularEventosLlamadaPeer(call);
+            });
+        }
 
-                    call.answer(streamLocal);
-                    call.on('stream', remoteStream => {
-                        document.getElementById("video-remoto").srcObject = remoteStream;
-                    });
+        function vincularEventosLlamadaPeer(call) {
+            llamadaPeer = call;
+            call.on('stream', remoteStream => {
+                document.getElementById("overlay-espera-llamada").classList.add("hidden");
+                llamadaContestada = true;
+                iniciarTimerLlamada();
+                document.getElementById("video-remoto").srcObject = remoteStream;
+            });
+            call.on('close', () => {
+                if (!esLlamadaGrupal || participantesLlamada.length <= 2) {
+                    finalizarLlamada(false);
                 }
             });
         }
 
+        function iniciarTimerLlamada() {
+            detenerTimerLlamada();
+            segundosLlamada = 0;
+            intervaloTiempoLlamada = setInterval(() => {
+                segundosLlamada++;
+                const mins = String(Math.floor(segundosLlamada / 60)).padStart(2, '0');
+                const secs = String(segundosLlamada % 60).padStart(2, '0');
+                const el = document.getElementById("tiempo-llamada");
+                if (el) el.textContent = `${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function detenerTimerLlamada() {
+            if (intervaloTiempoLlamada) clearInterval(intervaloTiempoLlamada);
+            intervaloTiempoLlamada = null;
+            const el = document.getElementById("tiempo-llamada");
+            if (el) el.textContent = "00:00";
+        }
+
         async function iniciarVideollamada() {
-            if (!chatActivo || datosGrupos[chatActivo]) return alert("Las videollamadas directas son de 1 a 1.");
-            
+            if (!chatActivo) return;
+
+            const esGrupo = !!datosGrupos[chatActivo];
+            esLlamadaGrupal = esGrupo;
+            llamadaEnCurso = true;
+            llamadaContestada = false;
+            participantesLlamada = [miNombre];
+
+            // Mostrar UI de espera ("Llamando..." y foto de perfil)
+            const overlay = document.getElementById("overlay-espera-llamada");
+            const imgOverlay = document.getElementById("foto-espera-llamada");
+            const txtOverlay = document.getElementById("avatar-txt-espera-llamada");
+            const nombreOverlay = document.getElementById("nombre-espera-llamada");
+            const estadoOverlay = document.getElementById("texto-estado-llamada");
+
+            overlay.classList.remove("hidden");
+            estadoOverlay.textContent = "Llamando...";
+
+            let fotoTarget = esGrupo ? datosGrupos[chatActivo].foto : fotosAmigos[chatActivo];
+            let nombreTarget = apodosContactos[chatActivo] || (esGrupo ? datosGrupos[chatActivo].nombre : chatActivo);
+
+            nombreOverlay.textContent = nombreTarget;
+
+            if (fotoTarget) {
+                txtOverlay.classList.add("hidden");
+                imgOverlay.src = fotoTarget;
+                imgOverlay.classList.remove("hidden");
+            } else {
+                imgOverlay.classList.add("hidden");
+                txtOverlay.textContent = nombreTarget.charAt(0).toUpperCase();
+                txtOverlay.classList.remove("hidden");
+            }
+
+            document.getElementById("fallback-foto-remoto").classList.add("hidden");
+            document.getElementById("modal-videollamada").classList.remove("hidden");
+
             try {
                 streamLocal = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 document.getElementById("video-local").srcObject = streamLocal;
-                document.getElementById("modal-videollamada").classList.remove("hidden");
-                
-                const peerDestino = "wasapedro_peer_" + chatActivo;
-                llamadaPeer = peerInstance.call(peerDestino, streamLocal);
+                miCamaraActiva = true;
+                miMicActivo = true;
+                document.getElementById("fallback-foto-local").classList.add("hidden");
 
-                llamadaPeer.on('stream', remoteStream => {
-                    document.getElementById("video-remoto").srcObject = remoteStream;
-                });
+                // Enviar señal MQTT
+                const payloadInv = {
+                    tipoSist: "llamada_entrante",
+                    emisor: miNombre,
+                    peerId: miPeerId,
+                    esGrupo: esGrupo,
+                    idChat: chatActivo,
+                    fotoEmisor: miFotoB64,
+                    timestamp: Date.now()
+                };
+
+                const topico = esGrupo ? `wasapedro/v3/grupo/${chatActivo}` : `wasapedro/v3/chat/${chatActivo}`;
+                clienteMqtt.publish(topico, JSON.stringify(payloadInv), { qos: 1 });
+
+                if (!esGrupo) {
+                    participantesLlamada.push(chatActivo);
+                    const peerDestino = "wasapedro_peer_" + chatActivo;
+                    llamadaPeer = peerInstance.call(peerDestino, streamLocal);
+                    vincularEventosLlamadaPeer(llamadaPeer);
+                }
             } catch (e) {
                 alert("Permiso de cámara o micrófono denegado.");
+                finalizarLlamada(false);
             }
         }
 
         function toggleMicrofonoLlamada() {
             if (streamLocal) {
                 const audioTrack = streamLocal.getAudioTracks()[0];
-                audioTrack.enabled = !audioTrack.enabled;
-                document.getElementById("icono-mic").className = audioTrack.enabled ? "ph ph-microphone text-xl" : "ph ph-microphone-slash text-xl text-red-500";
+                if (audioTrack) {
+                    audioTrack.enabled = !audioTrack.enabled;
+                    miMicActivo = audioTrack.enabled;
+                    document.getElementById("icono-mic").className = miMicActivo 
+                        ? "ph ph-microphone text-xl" 
+                        : "ph ph-microphone-slash text-xl text-red-500";
+                }
             }
         }
 
         function toggleCamaraLlamada() {
             if (streamLocal) {
                 const videoTrack = streamLocal.getVideoTracks()[0];
-                videoTrack.enabled = !videoTrack.enabled;
-                document.getElementById("icono-cam").className = videoTrack.enabled ? "ph ph-video-camera text-xl" : "ph ph-video-camera-slash text-xl text-red-500";
+                if (videoTrack) {
+                    videoTrack.enabled = !videoTrack.enabled;
+                    miCamaraActiva = videoTrack.enabled;
+                    
+                    document.getElementById("icono-cam").className = miCamaraActiva 
+                        ? "ph ph-video-camera text-xl" 
+                        : "ph ph-video-camera-slash text-xl text-red-500";
+
+                    // Fallback visual Local
+                    const fallbackLocal = document.getElementById("fallback-foto-local");
+                    const imgLocal = document.getElementById("img-fallback-local");
+                    const txtLocal = document.getElementById("txt-fallback-local");
+
+                    if (!miCamaraActiva) {
+                        fallbackLocal.classList.remove("hidden");
+                        if (miFotoB64) {
+                            txtLocal.classList.add("hidden");
+                            imgLocal.src = miFotoB64;
+                            imgLocal.classList.remove("hidden");
+                        } else {
+                            imgLocal.classList.add("hidden");
+                            txtLocal.textContent = miNombre.charAt(0).toUpperCase();
+                            txtLocal.classList.remove("hidden");
+                        }
+                    } else {
+                        fallbackLocal.classList.add("hidden");
+                    }
+
+                    // Notificar cambio de cámara por MQTT
+                    if (clienteMqtt && clienteMqtt.connected && chatActivo) {
+                        const topico = esLlamadaGrupal ? `wasapedro/v3/grupo/${chatActivo}` : `wasapedro/v3/chat/${chatActivo}`;
+                        clienteMqtt.publish(topico, JSON.stringify({
+                            tipoSist: "camara_estado",
+                            emisor: miNombre,
+                            videoActivo: miCamaraActiva
+                        }), { qos: 1 });
+                    }
+                }
             }
         }
 
-        function finalizarLlamada() {
-            if (llamadaPeer) llamadaPeer.close();
-            if (streamLocal) streamLocal.getTracks().forEach(track => track.stop());
+        function finalizarLlamada(notificar = true) {
+            if (notificar && clienteMqtt && clienteMqtt.connected && chatActivo && llamadaEnCurso) {
+                const totalPrevio = participantesLlamada.length;
+                const topico = esLlamadaGrupal ? `wasapedro/v3/grupo/${chatActivo}` : `wasapedro/v3/chat/${chatActivo}`;
+                clienteMqtt.publish(topico, JSON.stringify({
+                    tipoSist: "cuelgue_llamada",
+                    emisor: miNombre,
+                    esGrupo: esLlamadaGrupal,
+                    totalPrevio: totalPrevio
+                }), { qos: 1 });
+            }
+
+            if (llamadaPeer) {
+                try { llamadaPeer.close(); } catch(e){}
+                llamadaPeer = null;
+            }
+            if (streamLocal) {
+                streamLocal.getTracks().forEach(track => track.stop());
+                streamLocal = null;
+            }
+
+            detenerTimerLlamada();
+            llamadaEnCurso = false;
+            llamadaContestada = false;
+            participantesLlamada = [];
+
             document.getElementById("modal-videollamada").classList.add("hidden");
+            document.getElementById("overlay-espera-llamada").classList.add("hidden");
+            document.getElementById("fallback-foto-remoto").classList.add("hidden");
+            document.getElementById("fallback-foto-local").classList.add("hidden");
+            document.getElementById("video-remoto").srcObject = null;
+            document.getElementById("video-local").srcObject = null;
         }
 
         function renderizarMisAvatars() {
@@ -908,6 +1096,88 @@
             clienteMqtt.on('message', (topico, mensaje) => {
                 try {
                     const data = JSON.parse(mensaje.toString());
+
+                    // EVENTOS DE VIDEOLLAMADAS (1 a 1 y Grupales)
+                    if (data.tipoSist === "llamada_entrante" && data.emisor !== miNombre) {
+                        if (llamadaEnCurso) return; 
+
+                        const esG = data.esGrupo;
+                        const emisor = data.emisor;
+                        const idChatOrigen = esG ? data.idChat : emisor;
+
+                        if (confirm(`📞 ¡Llamada entrante de ${emisor}${esG ? ' en grupo' : ''}!`)) {
+                            chatActivo = idChatOrigen;
+                            esLlamadaGrupal = esG;
+                            llamadaEnCurso = true;
+                            participantesLlamada = [miNombre, emisor];
+
+                            document.getElementById("modal-videollamada").classList.remove("hidden");
+                            document.getElementById("overlay-espera-llamada").classList.add("hidden");
+
+                            navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
+                                streamLocal = stream;
+                                document.getElementById("video-local").srcObject = streamLocal;
+
+                                const respuesta = { tipoSist: "respuesta_llamada", emisor: miNombre, idChat: idChatOrigen };
+                                const topicoResp = esG ? `wasapedro/v3/grupo/${idChatOrigen}` : `wasapedro/v3/chat/${emisor}`;
+                                clienteMqtt.publish(topicoResp, JSON.stringify(respuesta), { qos: 1 });
+
+                                const peerDestino = "wasapedro_peer_" + emisor;
+                                llamadaPeer = peerInstance.call(peerDestino, streamLocal);
+                                vincularEventosLlamadaPeer(llamadaPeer);
+                            }).catch(() => {
+                                alert("Error al acceder a la cámara/micrófono.");
+                                llamadaEnCurso = false;
+                            });
+                        }
+                        return;
+                    }
+
+                    if (data.tipoSist === "respuesta_llamada" && data.emisor !== miNombre) {
+                        document.getElementById("overlay-espera-llamada").classList.add("hidden");
+                        llamadaContestada = true;
+                        if (!participantesLlamada.includes(data.emisor)) participantesLlamada.push(data.emisor);
+                        iniciarTimerLlamada();
+                        return;
+                    }
+
+                    if (data.tipoSist === "camara_estado" && data.emisor !== miNombre) {
+                        const fallbackRemoto = document.getElementById("fallback-foto-remoto");
+                        const imgFallback = document.getElementById("img-fallback-remoto");
+                        const txtFallback = document.getElementById("txt-fallback-remoto");
+                        const labelFallback = document.getElementById("label-fallback-remoto");
+
+                        if (!data.videoActivo) {
+                            fallbackRemoto.classList.remove("hidden");
+                            let fotoRemoto = fotosAmigos[data.emisor];
+                            labelFallback.textContent = `${data.emisor} apagó la cámara`;
+                            if (fotoRemoto) {
+                                txtFallback.classList.add("hidden");
+                                imgFallback.src = fotoRemoto;
+                                imgFallback.classList.remove("hidden");
+                            } else {
+                                imgFallback.classList.add("hidden");
+                                txtFallback.textContent = data.emisor.charAt(0).toUpperCase();
+                                txtFallback.classList.remove("hidden");
+                            }
+                        } else {
+                            fallbackRemoto.classList.add("hidden");
+                        }
+                        return;
+                    }
+
+                    if (data.tipoSist === "cuelgue_llamada" && data.emisor !== miNombre) {
+                        participantesLlamada = participantesLlamada.filter(p => p !== data.emisor);
+                        
+                        // Si es de 1 a 1, o si en la llamada grupal quedan <= 2 integrantes (se corta para ambos)
+                        if (!data.esGrupo || participantesLlamada.length < 2 || data.totalPrevio <= 2) {
+                            finalizarLlamada(false);
+                        } else {
+                            const labelFallback = document.getElementById("label-fallback-remoto");
+                            if (labelFallback) labelFallback.textContent = `${data.emisor} salió de la llamada`;
+                        }
+                        return;
+                    }
 
                     if (topico === `wasapedro/v3/sistema/bans/${miNombre}`) {
                         localStorage.setItem("wasapedro_ban_status", JSON.stringify(data));
