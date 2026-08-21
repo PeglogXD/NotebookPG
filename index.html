@@ -14,6 +14,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.js"></script>
     
+    <!-- NUEVAS LIBRERÍAS: PeerJS para Videollamadas y Emoji Picker -->
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+
     <!-- Configuración Tailwind Custom -->
     <script>
         tailwind.config = {
@@ -45,6 +49,17 @@
         .cr-slider-handle { background: #3b82f6 !important; border: none !important; width: 14px !important; height: 14px !important; top: -5px !important; box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
         .cr-boundary { border-radius: 20px !important; overflow: hidden !important; border: 1px solid #27272a !important; }
         
+        /* Custom Styling Emoji Picker */
+        emoji-picker {
+            --background: #18181b;
+            --border-color: #27272a;
+            --category-emoji-size: 1.1rem;
+            width: 100%;
+            max-width: 320px;
+            height: 300px;
+            border-radius: 1rem;
+        }
+
         /* Animaciones */
         @keyframes fadeInScale { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
         @keyframes pulseGlow { 0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); } 50% { box-shadow: 0 0 0 4px rgba(59, 130, 246, 0); } }
@@ -169,29 +184,55 @@
                         </div>
                     </div>
                     
-                    <div class="relative">
-                        <button onclick="toggleMenuOpcionesChat()" class="text-gray-400 hover:text-white p-2 rounded-xl hover:bg-dark-700 transition-all">
-                            <i class="ph ph-dots-three-vertical text-xl"></i>
+                    <div class="flex items-center gap-1">
+                        <!-- NUEVO BOTÓN: VIDEOLLAMADA GOOGLE MEET -->
+                        <button onclick="iniciarVideollamada()" title="Iniciar Videollamada" class="text-gray-400 hover:text-white p-2 rounded-xl hover:bg-dark-700 transition-all">
+                            <i class="ph ph-video-camera text-xl"></i>
                         </button>
-                        <div id="menu-opciones-chat" class="absolute right-0 mt-1 w-48 bg-dark-800 border border-dark-700 rounded-xl shadow-2xl hidden z-50 py-1.5 text-xs overflow-hidden">
-                            <button id="btn-menu-foto-grupo" onclick="iniciarCambioFotoGrupo()" class="hidden w-full text-left px-4 py-2.5 hover:bg-dark-700 text-gray-200 flex items-center gap-2"><i class="ph ph-camera text-gray-400"></i> Cambiar Foto Grupo</button>
-                            <button id="btn-menu-agregar-grupo" onclick="abrirModalAgregarMiembros()" class="hidden w-full text-left px-4 py-2.5 hover:bg-dark-700 text-gray-200 flex items-center gap-2"><i class="ph ph-user-plus text-gray-400"></i> Invitar Miembros</button>
-                            <button onclick="menuPonerApodo()" class="w-full text-left px-4 py-2.5 hover:bg-dark-700 text-gray-200 flex items-center gap-2"><i class="ph ph-pencil-simple text-gray-400"></i> Asignar Apodo</button>
-                            <button onclick="menuBorrarChat()" class="w-full text-left px-4 py-2.5 hover:bg-dark-700 text-gray-200 flex items-center gap-2"><i class="ph ph-eraser text-gray-400"></i> Limpiar Historial</button>
-                            <button id="btn-menu-bloquear" onclick="menuBloquearContacto()" class="w-full text-left px-4 py-2.5 hover:bg-dark-700 text-gray-200 flex items-center gap-2"><i class="ph ph-prohibit text-red-400"></i> Bloquear Usuario</button>
-                            <div class="h-px bg-dark-700 my-1"></div>
-                            <button onclick="abrirModalReporte()" class="w-full text-left px-4 py-2.5 hover:bg-red-500/10 text-red-400 flex items-center gap-2"><i class="ph ph-warning-octagon"></i> Reportar</button>
+
+                        <div class="relative">
+                            <button onclick="toggleMenuOpcionesChat()" class="text-gray-400 hover:text-white p-2 rounded-xl hover:bg-dark-700 transition-all">
+                                <i class="ph ph-dots-three-vertical text-xl"></i>
+                            </button>
+                            <div id="menu-opciones-chat" class="absolute right-0 mt-1 w-48 bg-dark-800 border border-dark-700 rounded-xl shadow-2xl hidden z-50 py-1.5 text-xs overflow-hidden">
+                                <button id="btn-menu-foto-grupo" onclick="iniciarCambioFotoGrupo()" class="hidden w-full text-left px-4 py-2.5 hover:bg-dark-700 text-gray-200 flex items-center gap-2"><i class="ph ph-camera text-gray-400"></i> Cambiar Foto Grupo</button>
+                                <button id="btn-menu-agregar-grupo" onclick="abrirModalAgregarMiembros()" class="hidden w-full text-left px-4 py-2.5 hover:bg-dark-700 text-gray-200 flex items-center gap-2"><i class="ph ph-user-plus text-gray-400"></i> Invitar Miembros</button>
+                                <button onclick="menuPonerApodo()" class="w-full text-left px-4 py-2.5 hover:bg-dark-700 text-gray-200 flex items-center gap-2"><i class="ph ph-pencil-simple text-gray-400"></i> Asignar Apodo</button>
+                                <button onclick="menuBorrarChat()" class="w-full text-left px-4 py-2.5 hover:bg-dark-700 text-gray-200 flex items-center gap-2"><i class="ph ph-eraser text-gray-400"></i> Limpiar Historial</button>
+                                <button id="btn-menu-bloquear" onclick="menuBloquearContacto()" class="w-full text-left px-4 py-2.5 hover:bg-dark-700 text-gray-200 flex items-center gap-2"><i class="ph ph-prohibit text-red-400"></i> Bloquear Usuario</button>
+                                <div class="h-px bg-dark-700 my-1"></div>
+                                <button onclick="abrirModalReporte()" class="w-full text-left px-4 py-2.5 hover:bg-red-500/10 text-red-400 flex items-center gap-2"><i class="ph ph-warning-octagon"></i> Reportar</button>
+                            </div>
                         </div>
                     </div>
                 </header>
                 
                 <div class="flex-1 overflow-y-auto p-4 space-y-3" id="contenedor-mensajes"></div>
                 
-                <footer class="p-3 bg-dark-800/80 backdrop-blur-md border-t border-dark-700 flex gap-2 items-end z-20">
+                <footer class="p-3 bg-dark-800/80 backdrop-blur-md border-t border-dark-700 flex gap-2 items-end z-20 relative">
+                    <!-- POPOVER EMOJIS -->
+                    <div id="popover-emoji" class="hidden absolute bottom-16 left-2 z-50 shadow-2xl">
+                        <emoji-picker id="picker-emoji" class="dark"></emoji-picker>
+                    </div>
+
+                    <!-- NUEVOS BOTONES DE ENTRADA: Emojis, GIF/Stickers, Audio, Archivo -->
+                    <button onclick="toggleEmojiPicker()" class="text-gray-400 hover:text-white transition-colors p-2.5 bg-dark-700 rounded-xl hover:bg-dark-600 flex-shrink-0" title="Emojis">
+                        <i class="ph ph-smiley text-lg"></i>
+                    </button>
+
+                    <button onclick="abrirModalMedia()" class="text-gray-400 hover:text-white transition-colors p-2.5 bg-dark-700 rounded-xl hover:bg-dark-600 flex-shrink-0" title="GIFs & Stickers">
+                        <i class="ph ph-gif text-lg"></i>
+                    </button>
+
+                    <button id="btn-grabacion-audio" onclick="toggleGrabacionAudio()" class="text-gray-400 hover:text-white transition-colors p-2.5 bg-dark-700 rounded-xl hover:bg-dark-600 flex-shrink-0" title="Nota de Voz">
+                        <i id="icono-audio" class="ph ph-microphone text-lg"></i>
+                    </button>
+
                     <input type="file" id="input-archivo" class="hidden" onchange="procesarArchivoAdjunto(this.files[0])">
-                    <button onclick="document.getElementById('input-archivo').click()" class="text-gray-400 hover:text-white transition-colors p-2.5 bg-dark-700 rounded-xl hover:bg-dark-600 flex-shrink-0">
+                    <button onclick="document.getElementById('input-archivo').click()" class="text-gray-400 hover:text-white transition-colors p-2.5 bg-dark-700 rounded-xl hover:bg-dark-600 flex-shrink-0" title="Adjuntar Archivo">
                         <i class="ph ph-paperclip text-lg"></i>
                     </button>
+
                     <div class="flex-1 relative">
                         <input type="text" id="input-mensaje" placeholder="Escribe un mensaje..." class="w-full bg-dark-900 border border-dark-700 rounded-xl py-2.5 px-3 text-sm text-white focus:outline-none focus:border-brand-500 transition-all placeholder-gray-500">
                     </div>
@@ -200,6 +241,56 @@
                     </button>
                 </footer>
             </main>
+        </div>
+    </div>
+
+    <!-- MODAL VIDEOLLAMADA ESTILO GOOGLE MEET -->
+    <div id="modal-videollamada" class="fixed inset-0 bg-dark-900/95 backdrop-blur-md z-[100] flex flex-col hidden animar-entrada">
+        <div class="p-4 bg-dark-800/80 border-b border-dark-700 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <i class="ph ph-video-camera text-brand-500 text-2xl"></i>
+                <h2 id="titulo-videollamada" class="text-sm font-bold text-white">Videollamada en curso...</h2>
+            </div>
+            <span id="tiempo-llamada" class="text-xs font-mono text-gray-400">00:00</span>
+        </div>
+
+        <div class="flex-1 relative p-4 flex items-center justify-center bg-black/40">
+            <!-- Video Remoto (Principal) -->
+            <video id="video-remoto" autoplay playsinline class="w-full h-full max-h-[75vh] object-contain rounded-2xl bg-dark-800 border border-dark-700 shadow-2xl"></video>
+            
+            <!-- Video Local (Miniatura flotante estilo Meet) -->
+            <div class="absolute bottom-6 right-6 w-36 h-48 md:w-48 md:h-64 rounded-2xl overflow-hidden border-2 border-brand-500 shadow-2xl bg-dark-800">
+                <video id="video-local" autoplay playsinline muted class="w-full h-full object-cover"></video>
+            </div>
+        </div>
+
+        <!-- Controles estilo Google Meet -->
+        <div class="p-6 bg-dark-800/90 border-t border-dark-700 flex justify-center items-center gap-6">
+            <button id="btn-toggle-mic" onclick="toggleMicrofonoLlamada()" class="w-12 h-12 rounded-full bg-dark-700 text-white flex items-center justify-center hover:bg-dark-600 transition-all">
+                <i id="icono-mic" class="ph ph-microphone text-xl"></i>
+            </button>
+            <button id="btn-toggle-cam" onclick="toggleCamaraLlamada()" class="w-12 h-12 rounded-full bg-dark-700 text-white flex items-center justify-center hover:bg-dark-600 transition-all">
+                <i id="icono-cam" class="ph ph-video-camera text-xl"></i>
+            </button>
+            <button onclick="finalizarLlamada()" class="w-14 h-14 rounded-full bg-red-600 text-white flex items-center justify-center hover:bg-red-500 transition-all shadow-lg shadow-red-600/40">
+                <i class="ph ph-phone-disconnect text-2xl"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL SELECTOR DE GIFS Y STICKERS -->
+    <div id="modal-media" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-[80]">
+        <div class="bg-dark-800 border border-dark-700 w-full max-w-md rounded-3xl p-5 shadow-2xl flex flex-col h-[60vh] animar-entrada">
+            <div class="flex justify-between items-center mb-4 border-b border-dark-700 pb-3">
+                <div class="flex gap-4">
+                    <button id="tab-gifs" onclick="cambiarTabMedia('gifs')" class="text-sm font-bold text-brand-500 border-b-2 border-brand-500 pb-1">GIFs</button>
+                    <button id="tab-stickers" onclick="cambiarTabMedia('stickers')" class="text-sm font-bold text-gray-400 hover:text-white pb-1">Stickers</button>
+                </div>
+                <button onclick="cerrarModalMedia()" class="text-gray-400 hover:text-white bg-dark-700 p-1.5 rounded-lg"><i class="ph ph-x"></i></button>
+            </div>
+
+            <!-- Galería Dinámica -->
+            <div id="contenedor-media-items" class="flex-1 overflow-y-auto grid grid-cols-2 gap-3 p-1 custom-scrollbar"></div>
         </div>
     </div>
 
@@ -380,6 +471,25 @@
 
         const URL_SERVIDOR_MESSENGER = 'wss://broker.emqx.io:8084/mqtt';
 
+        // --- NUEVAS VARIABLES: PeerJS (Videollamada) y Audio ---
+        let peerInstance = null;
+        let miPeerId = "";
+        let llamadaPeer = null;
+        let streamLocal = null;
+        let mediaRecorder = null;
+        let fragmentosAudio = [];
+        let estaGrabandoAudio = false;
+
+        const MOCK_GIFS = [
+            "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3Z2bzVsZzlycG9xZnA4ZnhxcnQxbnhic2dndHk1bWhreWJibzBxbSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l3vR1v8Ldt7L8F83C/giphy.gif",
+            "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3Y1b250cW0wYmdyazM0dWJremlmZnA5eTNldDRrc3l4NXA2czdrZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/26u4cqiYI30juCOGY/giphy.gif",
+            "https://media.giphy.com/media/3o7TKsjR91mP3Rgz1m/giphy.gif"
+        ];
+        const MOCK_STICKERS = [
+            "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExd2JpczkyOHpndnhudnl5dXlhcXRkYXlveGNmbXZiOGJ2NWptbHRuaSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/MDJ9IbxxvDUQM/giphy.gif",
+            "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMjMyeXhhbjJwdmd4MWszaHFsd21ndXR5NmlzYzVxeTgwY3RzeWZvdCZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/KztT2c4u8mYYUiMKdJ/giphy.gif"
+        ];
+
         const clienteValidacion = mqtt.connect(URL_SERVIDOR_MESSENGER);
         clienteValidacion.on('connect', () => {
             if (miNombre) { clienteValidacion.subscribe(`wasapedro/v3/verificar/${miNombre}`); }
@@ -439,10 +549,179 @@
                 aplicarColorTema(temaActual);
                 conectarServidorCloud();
                 inicializarEventosArrastrarArchivos();
+                inicializarPeerJS(); // Inicializa nodo de videollamada WebRTC
+                inicializarEmojiPicker(); // Inicializa selector de emojis
             } else {
                 interfazPrincipal.classList.add("hidden");
                 pantallaRegistro.classList.remove("hidden");
             }
+        }
+
+        // --- NUEVAS FUNCIONES: Emojis, Audio, Media & PeerJS ---
+        
+        function inicializarEmojiPicker() {
+            const picker = document.getElementById('picker-emoji');
+            picker?.addEventListener('emoji-click', event => {
+                const input = document.getElementById('input-mensaje');
+                input.value += event.detail.unicode;
+            });
+        }
+
+        function toggleEmojiPicker() {
+            const popover = document.getElementById('popover-emoji');
+            popover.classList.toggle('hidden');
+        }
+
+        function toggleGrabacionAudio() {
+            if (!estaGrabandoAudio) {
+                navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    fragmentosAudio = [];
+                    mediaRecorder.ondataavailable = e => fragmentosAudio.push(e.data);
+                    mediaRecorder.onstop = async () => {
+                        const blobAudio = new Blob(fragmentosAudio, { type: 'audio/webm' });
+                        const reader = new FileReader();
+                        reader.readAsDataURL(blobAudio);
+                        reader.onloadend = () => {
+                            enviarMediaEspecial(reader.result, "audio");
+                        };
+                        stream.getTracks().forEach(track => track.stop());
+                    };
+                    mediaRecorder.start();
+                    estaGrabandoAudio = true;
+                    document.getElementById("icono-audio").className = "ph ph-stop text-red-500 animate-pulse text-lg";
+                }).catch(() => alert("No se pudo acceder al micrófono."));
+            } else {
+                mediaRecorder.stop();
+                estaGrabandoAudio = false;
+                document.getElementById("icono-audio").className = "ph ph-microphone text-lg";
+            }
+        }
+
+        function abrirModalMedia() {
+            document.getElementById("modal-media").classList.remove("hidden");
+            cambiarTabMedia('gifs');
+        }
+
+        function cerrarModalMedia() {
+            document.getElementById("modal-media").classList.add("hidden");
+        }
+
+        function cambiarTabMedia(tab) {
+            const cont = document.getElementById("contenedor-media-items");
+            const btnGifs = document.getElementById("tab-gifs");
+            const btnStickers = document.getElementById("tab-stickers");
+            cont.innerHTML = "";
+
+            if (tab === 'gifs') {
+                btnGifs.className = "text-sm font-bold text-brand-500 border-b-2 border-brand-500 pb-1";
+                btnStickers.className = "text-sm font-bold text-gray-400 hover:text-white pb-1";
+                MOCK_GIFS.forEach(url => {
+                    cont.innerHTML += `<img src="${url}" onclick="seleccionarMediaItem('${url}', 'gif')" class="w-full h-28 object-cover rounded-xl cursor-pointer hover:opacity-80 transition-all border border-dark-700">`;
+                });
+            } else {
+                btnStickers.className = "text-sm font-bold text-brand-500 border-b-2 border-brand-500 pb-1";
+                btnGifs.className = "text-sm font-bold text-gray-400 hover:text-white pb-1";
+                MOCK_STICKERS.forEach(url => {
+                    cont.innerHTML += `<div onclick="seleccionarMediaItem('${url}', 'sticker')" class="w-full h-28 flex items-center justify-center p-2 bg-dark-900 rounded-xl cursor-pointer hover:bg-dark-700 transition-all border border-dark-700"><img src="${url}" class="max-h-full max-w-full"></div>`;
+                });
+            }
+        }
+
+        function seleccionarMediaItem(url, tipo) {
+            cerrarModalMedia();
+            enviarMediaEspecial(url, tipo);
+        }
+
+        function enviarMediaEspecial(contenido, tipoMedia) {
+            if (!chatActivo) return;
+            const idUnicoMsg = "msg_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+            const payload = {
+                idMsg: idUnicoMsg,
+                emisor: miNombre,
+                texto: "",
+                tipoMedia: tipoMedia, // 'audio', 'gif', 'sticker'
+                urlMedia: contenido,
+                fotoEmisor: miFotoB64,
+                timestamp: Date.now()
+            };
+
+            const esGrupo = datosGrupos[chatActivo];
+            if (esGrupo) payload.nombreGrupo = datosGrupos[chatActivo].nombre;
+
+            const objetoHistorial = { ...payload, enviado: false };
+            if (!historialesDeChats[chatActivo]) historialesDeChats[chatActivo] = [];
+            historialesDeChats[chatActivo].push(objetoHistorial);
+            localStorage.setItem("wasapedro_historiales", JSON.stringify(historialesDeChats));
+
+            const topico = esGrupo ? `wasapedro/v3/grupo/${chatActivo}` : `wasapedro/v3/chat/${chatActivo}`;
+            colaEnvios.push({ idMsg: idUnicoMsg, chatId: chatActivo, topico: topico, payload: payload });
+            localStorage.setItem("wasapedro_cola_envios", JSON.stringify(colaEnvios));
+
+            moverChatAlPrincipio(chatActivo);
+            renderizarMensajes();
+            procesarColaDeEnvios();
+        }
+
+        // --- SISTEMA DE VIDEOLLAMADAS WEBRTC (PeerJS) ---
+        function inicializarPeerJS() {
+            miPeerId = "wasapedro_peer_" + miNombre;
+            peerInstance = new Peer(miPeerId);
+
+            peerInstance.on('call', async (call) => {
+                if (confirm(`📞 ¡Llamada entrante de videollamada!`)) {
+                    llamadaPeer = call;
+                    streamLocal = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                    document.getElementById("video-local").srcObject = streamLocal;
+                    document.getElementById("modal-videollamada").classList.remove("hidden");
+
+                    call.answer(streamLocal);
+                    call.on('stream', remoteStream => {
+                        document.getElementById("video-remoto").srcObject = remoteStream;
+                    });
+                }
+            });
+        }
+
+        async function iniciarVideollamada() {
+            if (!chatActivo || datosGrupos[chatActivo]) return alert("Las videollamadas directas son de 1 a 1.");
+            
+            try {
+                streamLocal = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                document.getElementById("video-local").srcObject = streamLocal;
+                document.getElementById("modal-videollamada").classList.remove("hidden");
+                
+                const peerDestino = "wasapedro_peer_" + chatActivo;
+                llamadaPeer = peerInstance.call(peerDestino, streamLocal);
+
+                llamadaPeer.on('stream', remoteStream => {
+                    document.getElementById("video-remoto").srcObject = remoteStream;
+                });
+            } catch (e) {
+                alert("Permiso de cámara o micrófono denegado.");
+            }
+        }
+
+        function toggleMicrofonoLlamada() {
+            if (streamLocal) {
+                const audioTrack = streamLocal.getAudioTracks()[0];
+                audioTrack.enabled = !audioTrack.enabled;
+                document.getElementById("icono-mic").className = audioTrack.enabled ? "ph ph-microphone text-xl" : "ph ph-microphone-slash text-xl text-red-500";
+            }
+        }
+
+        function toggleCamaraLlamada() {
+            if (streamLocal) {
+                const videoTrack = streamLocal.getVideoTracks()[0];
+                videoTrack.enabled = !videoTrack.enabled;
+                document.getElementById("icono-cam").className = videoTrack.enabled ? "ph ph-video-camera text-xl" : "ph ph-video-camera-slash text-xl text-red-500";
+            }
+        }
+
+        function finalizarLlamada() {
+            if (llamadaPeer) llamadaPeer.close();
+            if (streamLocal) streamLocal.getTracks().forEach(track => track.stop());
+            document.getElementById("modal-videollamada").classList.add("hidden");
         }
 
         function renderizarMisAvatars() {
@@ -847,6 +1126,8 @@
             const texto = input.value.trim();
             if (!texto) return;
 
+            document.getElementById('popover-emoji').classList.add('hidden');
+
             const idUnicoMensaje = "msg_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
             const payload = {
                 idMsg: idUnicoMensaje,
@@ -892,6 +1173,15 @@
                 let estiloBubble = soyYo ? `style="background-color: ${temaActual}; color: #ffffff;"` : '';
                 cuerpo += `<div ${estiloBubble} class="p-3.5 rounded-2xl text-sm relative shadow-md ${soyYo ? 'font-medium rounded-br-sm' : 'bg-dark-800 text-gray-100 rounded-bl-sm border border-dark-700'}">`;
                 
+                // RENDERIZADO DE NUEVOS TIPOS MULTIMEDIA (GIF, STICKER, AUDIO)
+                if (m.tipoMedia === 'gif') {
+                    cuerpo += `<img src="${m.urlMedia}" class="max-w-[200px] md:max-w-xs rounded-xl mb-1 shadow-sm">`;
+                } else if (m.tipoMedia === 'sticker') {
+                    cuerpo += `<img src="${m.urlMedia}" class="w-28 h-28 object-contain mb-1">`;
+                } else if (m.tipoMedia === 'audio') {
+                    cuerpo += `<audio controls src="${m.urlMedia}" class="max-w-[220px] h-9 mb-1"></audio>`;
+                }
+
                 if(m.archivoB64) {
                     if(m.tipoArchivo?.startsWith("image/")) cuerpo += `<img src="${m.archivoB64}" class="max-w-[200px] md:max-w-xs rounded-xl mb-2 border border-black/20 shadow-sm">`;
                     else cuerpo += `<a href="${m.archivoB64}" download="${m.nombreArchivo}" class="underline text-blue-300 font-medium block mb-2 flex items-center gap-1.5 p-2 bg-black/10 rounded-lg"><i class="ph ph-file-arrow-down text-lg"></i> ${m.nombreArchivo || 'Archivo adjunto'}</a>`;
