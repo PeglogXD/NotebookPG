@@ -85,6 +85,15 @@
         </div>
     </div>
 
+    <!-- OVERLAY ANIMACIÓN DESBANEO (CANDADO) -->
+    <div id="overlay-desban-animacion" class="fixed inset-0 bg-dark-900/95 z-[10000] flex flex-col items-center justify-center p-6 text-center hidden">
+        <div id="contenedor-candado" class="w-28 h-28 bg-red-500/10 border border-red-500/30 text-red-500 rounded-full flex items-center justify-center text-6xl mb-6 transition-all duration-700">
+            <i id="icono-candado" class="ph ph-lock-key-fill transition-all duration-500"></i>
+        </div>
+        <h2 class="text-3xl font-extrabold text-white mb-2">¡Cuenta Desbaneada!</h2>
+        <p class="text-gray-400 text-sm">Redirigiendo al menú principal...</p>
+    </div>
+
     <!-- CONTENEDOR PRINCIPAL -->
     <div class="flex-1 w-full h-full flex flex-col items-center justify-center absolute inset-0">
         
@@ -421,13 +430,23 @@
         </div>
     </div>
 
+    <!-- MODAL ADMIN CON BOTÓN MENSAJE Y SUBLISTA DE BANEADOS -->
     <div id="modal-admin-usuarios" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50">
-        <div class="bg-dark-800 border border-dark-700 w-full max-w-md h-[75vh] rounded-3xl p-6 shadow-2xl flex flex-col animar-entrada">
-            <div class="flex justify-between items-center mb-4 pb-2 border-b border-dark-700">
-                <h2 class="text-sm font-bold text-yellow-500 flex items-center gap-2"><i class="ph ph-users text-lg"></i> Registro Global</h2>
+        <div class="bg-dark-800 border border-dark-700 w-full max-w-md h-[80vh] rounded-3xl p-6 shadow-2xl flex flex-col animar-entrada">
+            <div class="flex justify-between items-center mb-3 pb-2 border-b border-dark-700">
+                <h2 class="text-sm font-bold text-yellow-500 flex items-center gap-2"><i class="ph ph-users text-lg"></i> Control de Usuarios Admin</h2>
                 <button onclick="document.getElementById('modal-admin-usuarios').classList.add('hidden')" class="text-gray-400 hover:text-white bg-dark-700 p-1.5 rounded-lg"><i class="ph ph-x"></i></button>
             </div>
-            <div class="flex-1 overflow-y-auto space-y-2 custom-scrollbar" id="lista-usuarios-global-contenedor"></div>
+            <div class="flex-1 overflow-y-auto space-y-4 custom-scrollbar pr-1">
+                <div>
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Usuarios Registrados</h3>
+                    <div id="lista-usuarios-global-contenedor" class="space-y-2"></div>
+                </div>
+                <div class="pt-3 border-t border-dark-700">
+                    <h3 class="text-xs font-bold text-red-400 uppercase tracking-wider mb-2 flex items-center gap-1"><i class="ph ph-prohibit"></i> Baneados y Permabaneados</h3>
+                    <div id="lista-usuarios-baneados-contenedor" class="space-y-2"></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -540,6 +559,28 @@
             document.getElementById("pantalla-ban-razon").textContent = razon;
             document.getElementById("interfaz-principal")?.classList.add("hidden");
             document.getElementById("pantalla-registro")?.classList.add("hidden");
+        }
+
+        // ANIMACIÓN CANDADO AL DESBANEAR
+        function ejecutarAnimacionDesbaneo() {
+            document.getElementById("pantalla-ban").classList.add("hidden");
+            const overlay = document.getElementById("overlay-desban-animacion");
+            const icono = document.getElementById("icono-candado");
+            const cont = document.getElementById("contenedor-candado");
+
+            overlay.classList.remove("hidden");
+            icono.className = "ph ph-lock-key-fill transition-all duration-500 scale-100";
+            cont.className = "w-28 h-28 bg-red-500/10 border border-red-500/30 text-red-500 rounded-full flex items-center justify-center text-6xl mb-6 transition-all duration-700";
+
+            setTimeout(() => {
+                icono.className = "ph ph-lock-key-open-fill transition-all duration-500 scale-125";
+                cont.className = "w-28 h-28 bg-green-500/20 border border-green-500/50 text-green-400 rounded-full flex items-center justify-center text-6xl mb-6 transition-all duration-700 shadow-[0_0_30px_rgba(74,222,128,0.4)]";
+            }, 800);
+
+            setTimeout(() => {
+                overlay.classList.add("hidden");
+                inicializarUI();
+            }, 2800);
         }
 
         function actualizarPildoraConexion(estado) {
@@ -1180,8 +1221,13 @@
                     }
 
                     if (topico === `wasapedro/v3/sistema/bans/${miNombre}`) {
-                        localStorage.setItem("wasapedro_ban_status", JSON.stringify(data));
-                        mostrarPantallaBanAbsoluto(data.tipo, data.razon);
+                        if (data.tipo === "desbaneado") {
+                            localStorage.removeItem("wasapedro_ban_status");
+                            ejecutarAnimacionDesbaneo();
+                        } else {
+                            localStorage.setItem("wasapedro_ban_status", JSON.stringify(data));
+                            mostrarPantallaBanAbsoluto(data.tipo, data.razon);
+                        }
                         return;
                     }
 
@@ -1607,50 +1653,111 @@
         }
 
         function renderizarUsuariosGlobalAdmin() {
-            const cont = document.getElementById("lista-usuarios-global-contenedor");
-            cont.innerHTML = "";
+            const contActivos = document.getElementById("lista-usuarios-global-contenedor");
+            const contBaneados = document.getElementById("lista-usuarios-baneados-contenedor");
+            contActivos.innerHTML = "";
+            contBaneados.innerHTML = "";
+
             let registroGlobal = JSON.parse(localStorage.getItem("wasapedro_registro_global")) || {};
+            let listaBaneados = JSON.parse(localStorage.getItem("wasapedro_baneados_list")) || {};
             let usuarios = Object.values(registroGlobal);
-            
-            if(usuarios.length === 0) {
-                cont.innerHTML = `<p class="text-xs text-gray-500 italic text-center mt-10">Ningún usuario registrado aún.</p>`;
-                return;
+
+            // 1. Renderizar usuarios activos
+            let activos = usuarios.filter(u => !listaBaneados[u.usuario]);
+            if (activos.length === 0) {
+                contActivos.innerHTML = `<p class="text-xs text-gray-500 italic text-center py-2">Sin usuarios activos.</p>`;
+            } else {
+                activos.forEach(u => {
+                    const div = document.createElement("div");
+                    div.className = "p-3 bg-dark-900 rounded-xl border border-dark-700 flex items-center justify-between gap-2 text-xs";
+                    
+                    let avatarHtml = u.foto 
+                        ? `<img src="${u.foto}" class="w-8 h-8 rounded-full object-cover">` 
+                        : `<div class="w-8 h-8 bg-dark-800 rounded-full flex items-center justify-center font-bold text-brand-500 border border-dark-700">${u.usuario.charAt(0).toUpperCase()}</div>`;
+                    
+                    div.innerHTML = `
+                        <div class="flex items-center gap-2 min-w-0">
+                            ${avatarHtml}
+                            <span class="font-semibold text-white truncate">@${u.usuario}</span>
+                        </div>
+                        <div class="flex gap-1 flex-shrink-0">
+                            <button onclick="iniciarChatConUsuarioAdmin('${u.usuario}')" class="bg-brand-600/20 text-brand-400 hover:bg-brand-600 hover:text-white font-medium py-1.5 px-2.5 rounded-lg transition-all flex items-center gap-1">
+                                <i class="ph ph-chat-circle text-sm"></i> Mensaje
+                            </button>
+                            <button onclick="ejecutarBaneoGlobal('${u.usuario}', 'Baneado')" class="bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500 hover:text-dark-900 font-medium py-1.5 px-2.5 rounded-lg transition-all">Banear</button>
+                            <button onclick="ejecutarBaneoGlobal('${u.usuario}', 'Permaban')" class="bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white font-medium py-1.5 px-2.5 rounded-lg transition-all">Permaban</button>
+                        </div>
+                    `;
+                    contActivos.appendChild(div);
+                });
             }
-            
-            usuarios.forEach(u => {
-                const div = document.createElement("div");
-                div.className = "p-3 bg-dark-900 rounded-xl border border-dark-700 flex items-center justify-between gap-3 text-xs";
-                
-                let avatarHtml = u.foto 
-                    ? `<img src="${u.foto}" class="w-8 h-8 rounded-full object-cover">` 
-                    : `<div class="w-8 h-8 bg-dark-800 rounded-full flex items-center justify-center font-bold text-brand-500 border border-dark-700">${u.usuario.charAt(0).toUpperCase()}</div>`;
-                
-                div.innerHTML = `
-                    <div class="flex items-center gap-2 min-w-0">
-                        ${avatarHtml}
-                        <span class="font-semibold text-white truncate">@${u.usuario}</span>
-                    </div>
-                    <div class="flex gap-1.5 flex-shrink-0">
-                        <button onclick="ejecutarBaneoGlobal('${u.usuario}', 'Baneado')" class="bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500 hover:text-dark-900 font-medium py-1.5 px-3 rounded-lg transition-all">Banear</button>
-                        <button onclick="ejecutarBaneoGlobal('${u.usuario}', 'Permabaneado')" class="bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white font-medium py-1.5 px-3 rounded-lg transition-all">Permaban</button>
-                    </div>
-                `;
-                cont.appendChild(div);
-            });
+
+            // 2. Renderizar sublista de Baneados y Permabaneados
+            let baneadosKeys = Object.keys(listaBaneados);
+            if (baneadosKeys.length === 0) {
+                contBaneados.innerHTML = `<p class="text-xs text-gray-500 italic text-center py-2">No hay usuarios sancionados.</p>`;
+            } else {
+                baneadosKeys.forEach(usr => {
+                    const infoBan = listaBaneados[usr];
+                    const div = document.createElement("div");
+                    div.className = "p-3 bg-red-950/20 rounded-xl border border-red-500/20 flex items-center justify-between gap-2 text-xs";
+                    
+                    div.innerHTML = `
+                        <div class="flex flex-col min-w-0">
+                            <span class="font-semibold text-white truncate">@${usr}</span>
+                            <span class="text-[10px] text-red-400 font-medium">${infoBan.tipo} - Motivo: ${infoBan.razon || 'Sin motivo'}</span>
+                        </div>
+                        <button onclick="desbanearUsuarioGlobal('${usr}')" class="bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500 hover:text-dark-900 font-bold py-1.5 px-3 rounded-lg transition-all flex items-center gap-1 flex-shrink-0">
+                            <i class="ph ph-lock-key-open"></i> Desbanear
+                        </button>
+                    `;
+                    contBaneados.appendChild(div);
+                });
+            }
+        }
+
+        function iniciarChatConUsuarioAdmin(u) {
+            document.getElementById("modal-admin-usuarios").classList.add("hidden");
+            if (!listaAmigosActivos.includes(u)) {
+                listaAmigosActivos.push(u);
+                localStorage.setItem("wasapedro_amigos_list", JSON.stringify(listaAmigosActivos));
+            }
+            moverChatAlPrincipio(u);
+            abrirChat(u);
         }
 
         function ejecutarBaneoGlobal(usuarioTarget, tipo) {
             if (usuarioTarget === miNombre) return alert("No puedes autosancionarte.");
             const razon = prompt(`Razón para marcar como ${tipo} a @${usuarioTarget}:`);
             if (razon && razon.trim() !== "") {
+                let listaBaneados = JSON.parse(localStorage.getItem("wasapedro_baneados_list")) || {};
+                listaBaneados[usuarioTarget] = { tipo: tipo, razon: razon.trim(), fecha: new Date().toLocaleDateString() };
+                localStorage.setItem("wasapedro_baneados_list", JSON.stringify(listaBaneados));
+
                 if(clienteMqtt && clienteMqtt.connected) {
                     let payloadBan = { tipo: tipo, razon: razon.trim(), usuarioBaneado: usuarioTarget };
                     clienteMqtt.publish(`wasapedro/v3/sistema/bans/${usuarioTarget}`, JSON.stringify(payloadBan), { qos: 1, retain: true });
                     alert(`Acción ${tipo} enviada con éxito para @${usuarioTarget}`);
                 } else {
-                    alert("Sin conexión.");
+                    alert("Sanción guardada localmente.");
                 }
+                renderizarUsuariosGlobalAdmin();
             }
+        }
+
+        function desbanearUsuarioGlobal(usuarioTarget) {
+            if (!esAdmin) return alert("Solo los administradores pueden desbanear usuarios.");
+            
+            let listaBaneados = JSON.parse(localStorage.getItem("wasapedro_baneados_list")) || {};
+            delete listaBaneados[usuarioTarget];
+            localStorage.setItem("wasapedro_baneados_list", JSON.stringify(listaBaneados));
+
+            if (clienteMqtt && clienteMqtt.connected) {
+                let payloadDesban = { tipo: "desbaneado", usuarioBaneado: usuarioTarget };
+                clienteMqtt.publish(`wasapedro/v3/sistema/bans/${usuarioTarget}`, JSON.stringify(payloadDesban), { qos: 1, retain: true });
+                alert(`El usuario @${usuarioTarget} ha sido desbaneado.`);
+            }
+            renderizarUsuariosGlobalAdmin();
         }
 
         document.addEventListener("click", function(e) {
