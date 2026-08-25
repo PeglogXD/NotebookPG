@@ -328,7 +328,7 @@
                     </button>
 
                     <div class="flex-1 relative">
-                        <input type="text" id="input-mensaje" placeholder="Escribe un mensaje..." class="w-full bg-dark-900 border border-dark-700 rounded-xl py-2.5 px-3 text-sm text-white focus:outline-none focus:border-brand-500 transition-all placeholder-gray-500">
+                        <input type="text" id="input-mensaje" placeholder="Escribe un mensaje..." onkeydown="manejarEnterMensaje(event)" class="w-full bg-dark-900 border border-dark-700 rounded-xl py-2.5 px-3 text-sm text-white focus:outline-none focus:border-brand-500 transition-all placeholder-gray-500">
                     </div>
                     <button onclick="enviarMensajeTexto()" class="bg-brand-600 theme-bg hover:opacity-90 text-white p-2.5 rounded-xl transition-all active:scale-[0.95] flex-shrink-0 shadow-lg shadow-brand-500/20">
                         <i class="ph ph-paper-plane-right text-lg"></i>
@@ -1452,7 +1452,7 @@
             const nom = document.getElementById("input-nombre-grupo").value.trim();
             if (!nom) return alert("Asigna un nombre al grupo.");
             const idGrupo = "grupo_" + Date.now();
-            datosGrupos[idGrupo] = { nombre: nom, creador: miNombre, esGrupo: true, foto: "" };
+            datosGrupos[idGrupo] = { nombre: nom, creador: miNombre, esGrupo: true, foto: "", miembros: [miNombre] };
             localStorage.setItem("wasapedro_datos_grupos", JSON.stringify(datosGrupos));
             if(!listaAmigosActivos.includes(idGrupo)) listaAmigosActivos.push(idGrupo);
             localStorage.setItem("wasapedro_amigos_list", JSON.stringify(listaAmigosActivos));
@@ -1624,15 +1624,23 @@
                         return;
                     }
 
-                    if (topico === `wasapedro/v3/chat/${miNombre}` && data.tipoSist === "invitacion_grupo") {
+                    if (topico === `wasapedro/v3/chat/${miNombre}` && (data.tipoSist === "invitacion_grupo" || data.tipoSist === "agregar_miembro_admin")) {
                         let idG = data.idGrupo;
                         if (!datosGrupos[idG]) {
-                            datosGrupos[idG] = { nombre: data.nombreGrupo, creador: data.creador, esGrupo: true, foto: data.fotoGrupo || "" };
-                            localStorage.setItem("wasapedro_datos_grupos", JSON.stringify(datosGrupos));
-                            if (!listaAmigosActivos.includes(idG)) listaAmigosActivos.push(idG);
-                            localStorage.setItem("wasapedro_amigos_list", JSON.stringify(listaAmigosActivos));
-                            clienteMqtt.subscribe(`wasapedro/v3/grupo/${idG}`, { qos: 1 });
-                            moverChatAlPrincipio(idG);
+                            datosGrupos[idG] = { nombre: data.nombreGrupo, creador: data.creador, esGrupo: true, foto: data.fotoGrupo || "", miembros: [data.creador || miNombre, miNombre] };
+                        } else {
+                            if (!Array.isArray(datosGrupos[idG].miembros)) datosGrupos[idG].miembros = [datosGrupos[idG].creador || miNombre];
+                            if (!datosGrupos[idG].miembros.includes(miNombre)) datosGrupos[idG].miembros.push(miNombre);
+                            if (data.fotoGrupo) datosGrupos[idG].foto = data.fotoGrupo;
+                        }
+                        localStorage.setItem("wasapedro_datos_grupos", JSON.stringify(datosGrupos));
+                        if (!listaAmigosActivos.includes(idG)) listaAmigosActivos.push(idG);
+                        localStorage.setItem("wasapedro_amigos_list", JSON.stringify(listaAmigosActivos));
+                        clienteMqtt.subscribe(`wasapedro/v3/grupo/${idG}`, { qos: 1 });
+                        moverChatAlPrincipio(idG);
+                        actualizarListaAmigosUI();
+                        if (data.tipoSist === "agregar_miembro_admin") {
+                            mostrarNotificacionSW(`Agregado a ${data.nombreGrupo}`, `Un administrador te agregó al grupo.`, './');
                         }
                         return;
                     }
@@ -1752,14 +1760,32 @@
             document.getElementById("pantalla-chat-activa").classList.add("flex");
 
             const esGrupo = datosGrupos[id];
+            if (esGrupo && !Array.isArray(datosGrupos[id].miembros)) {
+                datosGrupos[id].miembros = [datosGrupos[id].creador || miNombre];
+                localStorage.setItem("wasapedro_datos_grupos", JSON.stringify(datosGrupos));
+            }
             const nombreMostrar = apodosContactos[id] || (esGrupo ? datosGrupos[id].nombre : id);
             document.getElementById("nombre-chat-amigo").textContent = nombreMostrar;
             
             const btnBloquear = document.getElementById("btn-menu-bloquear");
+            const btnFotoGrupo = document.getElementById("btn-menu-foto-grupo");
+            const btnAgregarGrupo = document.getElementById("btn-menu-agregar-grupo");
+            const btnApodo = document.querySelector('#menu-opciones-chat button[onclick="menuPonerApodo()"]');
+            const btnReporte = document.querySelector('#menu-opciones-chat button[onclick="abrirModalReporte()"]');
+
             if (esGrupo) {
                 btnBloquear.classList.add("hidden");
+                btnApodo.classList.add("hidden");
+                btnReporte.classList.add("hidden");
+                btnFotoGrupo.classList.remove("hidden");
+                btnAgregarGrupo.classList.remove("hidden");
+                btnAgregarGrupo.innerHTML = '<i class="ph ph-user-plus text-gray-400"></i> Agregar Miembros';
             } else {
                 btnBloquear.classList.remove("hidden");
+                btnApodo.classList.remove("hidden");
+                btnReporte.classList.remove("hidden");
+                btnFotoGrupo.classList.add("hidden");
+                btnAgregarGrupo.classList.add("hidden");
                 btnBloquear.innerHTML = listaBloqueados.includes(id) ? '<i class="ph ph-check-circle text-green-400"></i> Desbloquear Usuario' : '<i class="ph ph-prohibit text-red-400"></i> Bloquear Usuario';
             }
 
@@ -1801,6 +1827,13 @@
                 let estado = calcularEstadoAmigo(id);
                 if (estado === 'conectado') dotCabecera.classList.add("bg-green-500");
                 else dotCabecera.classList.add("bg-red-500");
+            }
+        }
+
+        function manejarEnterMensaje(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                enviarMensajeTexto();
             }
         }
 
@@ -1891,9 +1924,10 @@
                 const notifCount = notificacionesPendientes[id] || 0;
                 const estado = esGrupo ? 'grupo' : calcularEstadoAmigo(id);
                 const esSeleccionado = chatActivo === id;
+                const idJS = JSON.stringify(id);
 
                 const div = document.createElement("div");
-                div.className = `p-3 rounded-2xl flex items-center gap-3 cursor-pointer transition-all ${
+                div.className = `relative p-3 rounded-2xl flex items-center gap-3 cursor-pointer transition-all ${
                     esSeleccionado ? 'bg-dark-800 border border-dark-700' : 'hover:bg-dark-800/50'
                 }`;
                 div.onclick = () => abrirChat(id);
@@ -1914,22 +1948,105 @@
                 }
 
                 let badgeNotif = notifCount > 0 ? `<span class="bg-brand-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">${notifCount}</span>` : '';
+                let menuContactoHtml = '';
+                if (!esGrupo) {
+                    menuContactoHtml = `
+                        <div class="relative ml-1 flex-shrink-0">
+                            <button type="button" title="Opciones" onclick='event.stopPropagation(); toggleMenuContacto(${idJS})' class="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-dark-700 transition-all">
+                                <i class="ph ph-dots-three-vertical text-base"></i>
+                            </button>
+                            <div id="menu-contacto-${encodeURIComponent(id)}" class="absolute right-0 top-8 w-44 bg-dark-800 border border-dark-700 rounded-xl shadow-2xl hidden z-[80] py-1 overflow-hidden text-xs">
+                                <button type="button" onclick='event.stopPropagation(); ejecutarAccionContacto(${idJS}, "reporte")' class="w-full text-left px-3 py-2.5 hover:bg-red-500/10 text-red-400 flex items-center gap-2"><i class="ph ph-warning-octagon"></i> Reportar</button>
+                                <button type="button" onclick='event.stopPropagation(); ejecutarAccionContacto(${idJS}, "apodo")' class="w-full text-left px-3 py-2.5 hover:bg-dark-700 text-gray-200 flex items-center gap-2"><i class="ph ph-pencil-simple"></i> Poner apodo</button>
+                                <button type="button" onclick='event.stopPropagation(); ejecutarAccionContacto(${idJS}, "borrar")' class="w-full text-left px-3 py-2.5 hover:bg-dark-700 text-gray-200 flex items-center gap-2"><i class="ph ph-user-minus"></i> Borrar chat</button>
+                                <button type="button" onclick='event.stopPropagation(); ejecutarAccionContacto(${idJS}, "vaciar")' class="w-full text-left px-3 py-2.5 hover:bg-dark-700 text-gray-200 flex items-center gap-2"><i class="ph ph-eraser"></i> Vaciar chat</button>
+                            </div>
+                        </div>`;
+                }
 
                 div.innerHTML = `
-                    <div class="relative">
+                    <div class="relative flex-shrink-0">
                         ${avatarHtml}
                         ${dotEstado}
                     </div>
                     <div class="flex-1 min-w-0">
-                        <div class="flex justify-between items-center">
+                        <div class="flex justify-between items-center gap-2">
                             <span class="font-bold text-sm text-white truncate">${nombreMostrar}</span>
                             ${badgeNotif}
                         </div>
                         <span class="text-xs text-gray-500 truncate block">${esGrupo ? 'Grupo' : (estado === 'conectado' ? 'En línea' : 'Desconectado')}</span>
                     </div>
+                    ${menuContactoHtml}
                 `;
                 cont.appendChild(div);
             });
+        }
+
+        function toggleMenuContacto(id) {
+            const menu = document.getElementById(`menu-contacto-${encodeURIComponent(id)}`);
+            if (!menu) return;
+            document.querySelectorAll('[id^="menu-contacto-"]').forEach(m => {
+                if (m !== menu) m.classList.add('hidden');
+            });
+            menu.classList.toggle('hidden');
+        }
+
+        document.addEventListener('click', () => {
+            document.querySelectorAll('[id^="menu-contacto-"]').forEach(m => m.classList.add('hidden'));
+        });
+
+        function ejecutarAccionContacto(id, accion) {
+            document.querySelectorAll('[id^="menu-contacto-"]').forEach(m => m.classList.add('hidden'));
+            if (!id || datosGrupos[id]) return;
+
+            if (accion === "reporte") {
+                document.getElementById("nombre-reportado-txt").textContent = id;
+                document.getElementById("modal-reporte").classList.remove("hidden");
+                document.getElementById("input-motivo-reporte").value = "";
+                return;
+            }
+
+            if (accion === "apodo") {
+                const actual = apodosContactos[id] || "";
+                const nuevo = prompt("Asignar apodo para este contacto (solo tú lo verás):", actual);
+                if (nuevo !== null) {
+                    if (nuevo.trim() === "") delete apodosContactos[id];
+                    else apodosContactos[id] = nuevo.trim();
+                    localStorage.setItem("wasapedro_apodos", JSON.stringify(apodosContactos));
+                    actualizarListaAmigosUI();
+                    if (chatActivo === id) {
+                        document.getElementById("nombre-chat-amigo").textContent = apodosContactos[id] || id;
+                        renderizarFotoCabeceraChat(id);
+                    }
+                }
+                return;
+            }
+
+            if (accion === "borrar") {
+                if (!confirm(`¿Borrar el chat con ${id} de la lista de contactos? El historial se conservará.`)) return;
+                listaAmigosActivos = listaAmigosActivos.filter(x => x !== id);
+                ordenChats = ordenChats.filter(x => x !== id);
+                delete notificacionesPendientes[id];
+                localStorage.setItem("wasapedro_amigos_list", JSON.stringify(listaAmigosActivos));
+                localStorage.setItem("wasapedro_orden_chats", JSON.stringify(ordenChats));
+                localStorage.setItem("wasapedro_notif_pendientes", JSON.stringify(notificacionesPendientes));
+                if (chatActivo === id) {
+                    chatActivo = null;
+                    document.getElementById("pantalla-chat-activa").classList.add("hidden");
+                    document.getElementById("pantalla-chat-activa").classList.remove("flex");
+                    document.getElementById("pantalla-chat-vacia").classList.remove("hidden");
+                }
+                actualizarListaAmigosUI();
+                actualizarBuzonNotificacionesUI();
+                return;
+            }
+
+            if (accion === "vaciar") {
+                if (!confirm(`¿Vaciar todos los mensajes del chat con ${id}?`)) return;
+                historialesDeChats[id] = [];
+                localStorage.setItem("wasapedro_historiales", JSON.stringify(historialesDeChats));
+                if (chatActivo === id) renderizarMensajes();
+            }
         }
 
         function moverChatAlPrincipio(id) {
@@ -2056,32 +2173,59 @@
         }
 
         function abrirModalAgregarMiembros() {
+            if (!chatActivo || !datosGrupos[chatActivo]) return;
             const modal = document.getElementById("modal-agregar-miembros");
             const lista = document.getElementById("lista-contactos-para-grupo");
+            const titulo = modal.querySelector("h2");
+            const descripcion = modal.querySelector("p");
+            const grupo = datosGrupos[chatActivo];
+            if (!Array.isArray(grupo.miembros)) grupo.miembros = [grupo.creador || miNombre];
             lista.innerHTML = "";
-            listaAmigosActivos.filter(a => !datosGrupos[a]).forEach(amigo => {
-                lista.innerHTML += `
-                    <div class="flex justify-between items-center p-2 bg-dark-900 rounded-xl border border-dark-700 text-xs text-white">
-                        <span>${amigo}</span>
-                        <button onclick="invitarAGrupo('${amigo}')" class="px-3 py-1 bg-brand-600 text-white rounded-lg">Invitar</button>
-                    </div>
-                `;
-            });
+
+            if (esAdmin) {
+                titulo.innerHTML = '<i class="ph ph-shield-star text-yellow-500"></i> Agregar Miembros (Admin)';
+                descripcion.textContent = "Como administrador puedes agregar directamente a cualquier usuario registrado.";
+                const reg = JSON.parse(localStorage.getItem("wasapedro_registro_global")) || {};
+                Object.keys(reg).filter(u => u !== miNombre && !grupo.miembros.includes(u)).forEach(usuario => {
+                    const foto = reg[usuario]?.foto || fotosAmigos[usuario] || "";
+                    const avatar = foto ? `<img src="${foto}" class="w-9 h-9 rounded-full object-cover border border-dark-600">` : `<div class="w-9 h-9 rounded-full bg-dark-700 text-brand-500 flex items-center justify-center font-bold">${usuario.charAt(0).toUpperCase()}</div>`;
+                    const js = JSON.stringify(usuario);
+                    lista.innerHTML += `<div class="flex items-center gap-3 p-2 bg-dark-900 rounded-xl border border-dark-700 text-xs text-white">${avatar}<span class="flex-1 truncate">${usuario}</span><button onclick='agregarMiembroAdmin(${js})' class="px-3 py-1 bg-yellow-500 text-dark-900 font-bold rounded-lg">Agregar</button></div>`;
+                });
+            } else {
+                titulo.innerHTML = '<i class="ph ph-user-plus text-brand-500"></i> Invitar Miembros';
+                descripcion.textContent = "Selecciona uno de tus contactos para enviarle una invitación al grupo.";
+                listaAmigosActivos.filter(a => !datosGrupos[a] && a !== miNombre && !grupo.miembros.includes(a)).forEach(amigo => {
+                    const foto = fotosAmigos[amigo] || "";
+                    const avatar = foto ? `<img src="${foto}" class="w-9 h-9 rounded-full object-cover border border-dark-600">` : `<div class="w-9 h-9 rounded-full bg-dark-700 text-brand-500 flex items-center justify-center font-bold">${amigo.charAt(0).toUpperCase()}</div>`;
+                    const js = JSON.stringify(amigo);
+                    lista.innerHTML += `<div class="flex items-center gap-3 p-2 bg-dark-900 rounded-xl border border-dark-700 text-xs text-white">${avatar}<span class="flex-1 truncate">${amigo}</span><button onclick='invitarAGrupo(${js})' class="px-3 py-1 bg-brand-600 text-white rounded-lg">Invitar</button></div>`;
+                });
+            }
+            if (!lista.innerHTML) lista.innerHTML = '<div class="text-center text-xs text-gray-500 py-6">No hay usuarios disponibles para agregar.</div>';
             modal.classList.remove("hidden");
             document.getElementById("menu-opciones-chat").classList.add("hidden");
         }
 
         function invitarAGrupo(amigo) {
-            if (!chatActivo || !datosGrupos[chatActivo]) return;
-            const payload = {
-                tipoSist: "invitacion_grupo",
-                idGrupo: chatActivo,
-                nombreGrupo: datosGrupos[chatActivo].nombre,
-                fotoGrupo: datosGrupos[chatActivo].foto || "",
-                creador: miNombre
-            };
+            if (!chatActivo || !datosGrupos[chatActivo] || !clienteMqtt) return;
+            const grupo = datosGrupos[chatActivo];
+            const payload = { tipoSist: "invitacion_grupo", idGrupo: chatActivo, nombreGrupo: grupo.nombre, fotoGrupo: grupo.foto || "", creador: grupo.creador || miNombre, emisor: miNombre };
             clienteMqtt.publish(`wasapedro/v3/chat/${amigo}`, JSON.stringify(payload), { qos: 1 });
             alert(`Invitación enviada a ${amigo}`);
+        }
+
+        function agregarMiembroAdmin(usuario) {
+            if (!esAdmin || !chatActivo || !datosGrupos[chatActivo] || !clienteMqtt) return;
+            const grupo = datosGrupos[chatActivo];
+            if (!Array.isArray(grupo.miembros)) grupo.miembros = [grupo.creador || miNombre];
+            if (grupo.miembros.includes(usuario)) return alert("Ese usuario ya pertenece al grupo.");
+            const payload = { tipoSist: "agregar_miembro_admin", idGrupo: chatActivo, nombreGrupo: grupo.nombre, fotoGrupo: grupo.foto || "", creador: grupo.creador || miNombre, administrador: miNombre, emisor: miNombre };
+            clienteMqtt.publish(`wasapedro/v3/chat/${usuario}`, JSON.stringify(payload), { qos: 1 });
+            grupo.miembros.push(usuario);
+            localStorage.setItem("wasapedro_datos_grupos", JSON.stringify(datosGrupos));
+            alert(`${usuario} fue agregado al grupo.`);
+            abrirModalAgregarMiembros();
         }
 
         function abrirModalAdminLogin() {
@@ -2111,14 +2255,23 @@
 
             const reg = JSON.parse(localStorage.getItem("wasapedro_registro_global")) || {};
             Object.keys(reg).forEach(u => {
-                contGlobal.innerHTML += `
-                    <div class="flex justify-between items-center p-2 bg-dark-900 rounded-xl border border-dark-700 text-xs text-white">
-                        <span>${u}</span>
-                        <button onclick="banearUsuario('${u}')" class="px-2 py-1 bg-red-600 text-white text-[10px] rounded-lg">Banear</button>
-                    </div>
-                `;
+                const foto = reg[u]?.foto || fotosAmigos[u] || "";
+                const avatar = foto ? `<img src="${foto}" class="w-11 h-11 rounded-full object-cover border border-dark-600 flex-shrink-0">` : `<div class="w-11 h-11 rounded-full bg-dark-700 text-brand-500 flex items-center justify-center font-bold border border-dark-600 flex-shrink-0">${u.charAt(0).toUpperCase()}</div>`;
+                const js = JSON.stringify(u);
+                contGlobal.innerHTML += `<div class="flex items-center gap-3 p-3 bg-dark-900 rounded-xl border border-dark-700 text-xs text-white">${avatar}<div class="flex-1 min-w-0"><span class="block font-bold truncate">${u}</span><span class="text-[10px] text-gray-500">Usuario registrado</span></div><div class="flex gap-1.5 flex-shrink-0"><button onclick='iniciarChatDesdeAdmin(${js})' class="px-2.5 py-1.5 bg-brand-600 text-white text-[10px] rounded-lg hover:opacity-90">Mensaje</button><button onclick='banearUsuario(${js})' class="px-2.5 py-1.5 bg-red-600 text-white text-[10px] rounded-lg hover:bg-red-500">Banear</button></div></div>`;
             });
             modal.classList.remove("hidden");
+        }
+
+        function iniciarChatDesdeAdmin(usuario) {
+            if (!usuario || usuario === miNombre) return;
+            if (!listaAmigosActivos.includes(usuario)) {
+                listaAmigosActivos.push(usuario);
+                localStorage.setItem("wasapedro_amigos_list", JSON.stringify(listaAmigosActivos));
+            }
+            moverChatAlPrincipio(usuario);
+            document.getElementById("modal-admin-usuarios").classList.add("hidden");
+            abrirChat(usuario);
         }
 
         function banearUsuario(usuario) {
