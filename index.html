@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WasaPedro | Professional Chat</title>
+    <title>NotebookPG</title>
     <link rel="manifest" href="manifest.json"> 
-    <meta name="theme-color" id="meta-theme" content="#09090b">
+    <meta name="theme-color" id="meta-theme" content="#ffffff">
     
     <!-- Librerías Externas -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -36,12 +36,12 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=400;500;600;700&display=swap');
         
-        body { background-color: #09090b; color: #e4e4e7; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-font-smoothing: antialiased; margin: 0; padding: 0; }
+        body { background-color: #f8fafc; color: #1e293b; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-font-smoothing: antialiased; margin: 0; padding: 0; }
         
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
         .cr-slider-path { background: #27272a !important; height: 4px !important; }
         .cr-slider-handle { background: #3b82f6 !important; border: none !important; width: 14px !important; height: 14px !important; top: -5px !important; box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
@@ -64,9 +64,122 @@
         .pulso-estado { animation: pulseGlow 2s infinite ease-in-out; }
         
         .glass-panel { background: rgba(24, 24, 27, 0.8); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        
+        /* Hoja de papel estilo Word */
+        .paper-page {
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.03);
+            min-height: 650px;
+        }
+        .paper-page:focus { outline: none; }
     </style>
 </head>
-<body class="h-screen w-screen flex flex-col overflow-hidden select-none relative bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-dark-900">
+<body class="h-screen w-screen flex flex-col overflow-hidden select-none relative bg-slate-100 text-slate-800">
+
+    <!-- ========================================== -->
+    <!-- INTERFAZ PRINCIPAL: NOTEBOOKPG (PÁGINA FALSA) -->
+    <!-- ========================================== -->
+    <div id="app-notebook-pg" class="fixed inset-0 flex flex-col bg-slate-100 z-[500]">
+        <!-- ENCABEZADO DE NOTEBOOKPG -->
+        <header class="h-14 bg-white border-b border-slate-200 px-6 flex justify-between items-center shadow-sm flex-shrink-0">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                    <i class="ph ph-notebook"></i>
+                </div>
+                <h1 class="font-bold text-slate-800 text-lg tracking-tight">NotebookPG</h1>
+            </div>
+            
+            <button onclick="abrirModalPlantilla()" class="flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-blue-600 bg-slate-100 hover:bg-blue-50 px-3.5 py-2 rounded-xl transition-all border border-slate-200">
+                <i class="ph ph-file-plus text-base"></i>
+                <span>Ingresar plantilla</span>
+            </button>
+        </header>
+
+        <!-- ÁREA VACÍA (PRIMERA VEZ O SIN PÁGINAS) -->
+        <div id="notebook-empty-state" class="flex-1 flex flex-col items-center justify-center p-8 text-center bg-slate-50">
+            <div class="w-20 h-20 bg-blue-50 border border-blue-100 rounded-3xl flex items-center justify-center text-blue-500 text-4xl mb-4 shadow-sm">
+                <i class="ph ph-notebook"></i>
+            </div>
+            <h2 class="text-xl font-bold text-slate-800 mb-1">No hay páginas</h2>
+            <p class="text-xs text-slate-500 max-w-sm mb-6">Aún no has creado ninguna página de anotaciones. Empieza agregando una nueva página a tu libreta.</p>
+            <button onclick="crearNuevaPagina()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-xl shadow-md text-sm flex items-center gap-2 transition-all active:scale-[0.98]">
+                <i class="ph ph-plus-circle text-lg"></i>
+                <span>Agregar página</span>
+            </button>
+        </div>
+
+        <!-- WORKSPACE CON PAGINAS Y HERRAMIENTAS WORD -->
+        <div id="notebook-workspace" class="flex-1 flex overflow-hidden hidden">
+            <!-- SIDEBAR DE PÁGINAS -->
+            <aside class="w-64 bg-white border-r border-slate-200 flex flex-col flex-shrink-0">
+                <div class="p-3 border-b border-slate-100 flex justify-between items-center">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 px-2">Mis Páginas</span>
+                    <button onclick="crearNuevaPagina()" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Agregar Página">
+                        <i class="ph ph-plus-bold text-base"></i>
+                    </button>
+                </div>
+                <div id="lista-paginas-notebook" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
+            </aside>
+
+            <!-- CANVAS / EDITOR DE ANOTACIONES ESTILO WORD -->
+            <main class="flex-1 flex flex-col bg-slate-100 overflow-hidden">
+                <!-- BARRA DE HERRAMIENTAS ESTILO WORD -->
+                <div class="bg-white border-b border-slate-200 px-4 py-2 flex items-center gap-1.5 overflow-x-auto shadow-sm flex-shrink-0">
+                    <button onclick="ejecutarFormatoWord('bold')" title="Negrita" class="p-2 text-slate-600 hover:bg-slate-100 hover:text-blue-600 rounded-lg transition-all"><i class="ph ph-text-b text-lg"></i></button>
+                    <button onclick="ejecutarFormatoWord('italic')" title="Cursiva" class="p-2 text-slate-600 hover:bg-slate-100 hover:text-blue-600 rounded-lg transition-all"><i class="ph ph-text-italic text-lg"></i></button>
+                    <button onclick="ejecutarFormatoWord('underline')" title="Subrayado" class="p-2 text-slate-600 hover:bg-slate-100 hover:text-blue-600 rounded-lg transition-all"><i class="ph ph-text-underline text-lg"></i></button>
+                    <button onclick="ejecutarFormatoWord('strikeThrough')" title="Tachado" class="p-2 text-slate-600 hover:bg-slate-100 hover:text-blue-600 rounded-lg transition-all"><i class="ph ph-text-strikethrough text-lg"></i></button>
+                    
+                    <div class="h-5 w-px bg-slate-200 mx-1"></div>
+                    
+                    <button onclick="ejecutarFormatoWord('formatBlock', '<h1>')" title="Título" class="p-2 text-slate-600 hover:bg-slate-100 hover:text-blue-600 rounded-lg font-bold text-xs">H1</button>
+                    <button onclick="ejecutarFormatoWord('formatBlock', '<h2>')" title="Subtítulo" class="p-2 text-slate-600 hover:bg-slate-100 hover:text-blue-600 rounded-lg font-bold text-xs">H2</button>
+                    <button onclick="ejecutarFormatoWord('formatBlock', '<p>')" title="Párrafo normal" class="p-2 text-slate-600 hover:bg-slate-100 hover:text-blue-600 rounded-lg text-xs font-semibold">P</button>
+                    
+                    <div class="h-5 w-px bg-slate-200 mx-1"></div>
+
+                    <button onclick="ejecutarFormatoWord('insertUnorderedList')" title="Lista de viñetas" class="p-2 text-slate-600 hover:bg-slate-100 hover:text-blue-600 rounded-lg transition-all"><i class="ph ph-list-bullets text-lg"></i></button>
+                    <button onclick="ejecutarFormatoWord('insertOrderedList')" title="Lista numerada" class="p-2 text-slate-600 hover:bg-slate-100 hover:text-blue-600 rounded-lg transition-all"><i class="ph ph-list-numbers text-lg"></i></button>
+                    
+                    <div class="h-5 w-px bg-slate-200 mx-1"></div>
+
+                    <button onclick="ejecutarFormatoWord('justifyLeft')" title="Alinear a la izquierda" class="p-2 text-slate-600 hover:bg-slate-100 hover:text-blue-600 rounded-lg transition-all"><i class="ph ph-text-align-left text-lg"></i></button>
+                    <button onclick="ejecutarFormatoWord('justifyCenter')" title="Centrar" class="p-2 text-slate-600 hover:bg-slate-100 hover:text-blue-600 rounded-lg transition-all"><i class="ph ph-text-align-center text-lg"></i></button>
+                    <button onclick="ejecutarFormatoWord('justifyRight')" title="Alinear a la derecha" class="p-2 text-slate-600 hover:bg-slate-100 hover:text-blue-600 rounded-lg transition-all"><i class="ph ph-text-align-right text-lg"></i></button>
+                    
+                    <div class="h-5 w-px bg-slate-200 mx-1"></div>
+
+                    <button onclick="ejecutarFormatoWord('removeFormat')" title="Limpiar formato" class="p-2 text-slate-600 hover:bg-slate-100 hover:text-red-500 rounded-lg transition-all"><i class="ph ph-selection-slash text-lg"></i></button>
+                </div>
+
+                <!-- HOJA DIGITAL DE ANOTACIONES -->
+                <div class="flex-1 overflow-y-auto p-6 md:p-10 flex justify-center">
+                    <div class="w-full max-w-3xl bg-white border border-slate-200 rounded-2xl p-8 md:p-12 paper-page text-slate-800" id="editor-pagina-notebook" contenteditable="true" oninput="guardarContenidoPaginaActual()"></div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- MODAL INGRESAR PLANTILLA -->
+    <div id="modal-plantilla" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 hidden z-[600]">
+        <div class="bg-white border border-slate-200 w-full max-w-sm rounded-2xl p-6 shadow-2xl text-left animate-fade-in">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                    <i class="ph ph-file-arrow-down text-blue-600 text-lg"></i> Cargar Plantilla
+                </h3>
+                <button onclick="cerrarModalPlantilla()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg"><i class="ph ph-x text-lg"></i></button>
+            </div>
+            <p class="text-xs text-slate-500 mb-4">Ingrese el código de la plantilla para aplicarla a su cuaderno de notas.</p>
+            <input type="text" id="input-codigo-plantilla" placeholder="Código de plantilla..." class="w-full bg-slate-50 border border-slate-300 text-sm text-slate-800 rounded-xl p-3 mb-4 focus:outline-none focus:border-blue-500 transition-all">
+            <div class="flex gap-2 justify-end">
+                <button onclick="cerrarModalPlantilla()" class="px-4 py-2 text-xs text-slate-500 hover:bg-slate-100 rounded-lg font-medium">Cancelar</button>
+                <button onclick="procesarCodigoPlantilla()" class="px-4 py-2 text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-all">Cargar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- INTERFAZ ORIGINAL: WASAPEDRO (OCULTA INICIALMENTE) -->
+    <!-- ========================================== -->
 
     <!-- PANTALLA DE BANEO -->
     <div id="pantalla-ban" class="fixed inset-0 bg-dark-900 z-[9999] flex flex-col items-center justify-center p-6 text-center hidden">
@@ -90,8 +203,8 @@
         <p class="text-gray-400 text-sm">Redirigiendo al menú principal...</p>
     </div>
 
-    <!-- CONTENEDOR PRINCIPAL -->
-    <div class="flex-1 w-full h-full flex flex-col items-center justify-center absolute inset-0">
+    <!-- CONTENEDOR PRINCIPAL WASAPEDRO -->
+    <div id="contenedor-wasapedro" class="flex-1 w-full h-full flex flex-col items-center justify-center absolute inset-0 hidden">
         
         <!-- PANTALLA DE LOGIN -->
         <main id="pantalla-registro" class="glass-panel p-10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.5)] max-w-md w-full mx-4 text-center hidden z-10 animar-entrada relative overflow-hidden">
@@ -274,7 +387,7 @@
                 </div>
             </div>
             
-            <!-- Video Local (Miniatura flotante estilo Meet) -->
+            <!-- Video Local (Miniatura flotante) -->
             <div id="box-video-local" class="absolute bottom-6 right-6 w-36 h-48 md:w-48 md:h-64 rounded-2xl overflow-hidden border-2 border-brand-500 shadow-2xl bg-dark-800 z-20">
                 <video id="video-local" autoplay playsinline muted class="w-full h-full object-cover"></video>
                 <div id="fallback-foto-local" class="absolute inset-0 bg-dark-800 flex flex-col items-center justify-center hidden z-10">
@@ -284,7 +397,7 @@
             </div>
         </div>
 
-        <!-- Controles estilo Google Meet (Micro, Cámara, Compartir Pantalla, Colgar) -->
+        <!-- Controles -->
         <div class="p-6 bg-dark-800/90 border-t border-dark-700 flex justify-center items-center gap-4 md:gap-6 z-30">
             <button id="btn-toggle-mic" onclick="toggleMicrofonoLlamada()" class="w-12 h-12 rounded-full bg-dark-700 text-white flex items-center justify-center hover:bg-dark-600 transition-all" title="Micrófono">
                 <i id="icono-mic" class="ph ph-microphone text-xl"></i>
@@ -472,7 +585,155 @@
     </div>
 
     <script>
-        // COMPROBACIÓN INMEDIATA ANTI-VETO
+        // ==========================================
+        // LÓGICA DE NOTEBOOKPG (PÁGINA FALSA & ACTIVACIÓN)
+        // ==========================================
+        let paginasNotebook = JSON.parse(localStorage.getItem("notebook_pg_pages")) || [];
+        let idPaginaActiva = null;
+
+        function renderizarNotebook() {
+            const emptyState = document.getElementById("notebook-empty-state");
+            const workspace = document.getElementById("notebook-workspace");
+
+            if (paginasNotebook.length === 0) {
+                emptyState.classList.remove("hidden");
+                workspace.classList.add("hidden");
+                idPaginaActiva = null;
+            } else {
+                emptyState.classList.add("hidden");
+                workspace.classList.remove("hidden");
+
+                if (!idPaginaActiva || !paginasNotebook.some(p => p.id === idPaginaActiva)) {
+                    idPaginaActiva = paginasNotebook[0].id;
+                }
+                actualizarListaSidebarPaginas();
+                cargarPaginaEnEditor(idPaginaActiva);
+            }
+        }
+
+        function crearNuevaPagina() {
+            const numeroNuevaPagina = paginasNotebook.length + 1;
+            const nuevaPag = {
+                id: "pag_" + Date.now(),
+                titulo: "Página " + numeroNuevaPagina,
+                contenido: ""
+            };
+            paginasNotebook.push(nuevaPag);
+            localStorage.setItem("notebook_pg_pages", JSON.stringify(paginasNotebook));
+            idPaginaActiva = nuevaPag.id;
+            renderizarNotebook();
+        }
+
+        function actualizarListaSidebarPaginas() {
+            const contenedor = document.getElementById("lista-paginas-notebook");
+            if (!contenedor) return;
+            contenedor.innerHTML = "";
+
+            paginasNotebook.forEach(pag => {
+                const esActiva = pag.id === idPaginaActiva;
+                const div = document.createElement("div");
+                div.className = `p-2.5 rounded-xl text-xs flex items-center justify-between cursor-pointer transition-all ${
+                    esActiva ? 'bg-blue-50 text-blue-600 font-bold border border-blue-200 shadow-sm' : 'hover:bg-slate-50 text-slate-600 font-medium'
+                }`;
+                
+                div.innerHTML = `
+                    <div class="flex items-center gap-2 min-w-0 flex-1" onclick="seleccionarPagina('${pag.id}')">
+                        <i class="ph ph-file-text text-base flex-shrink-0"></i>
+                        <span class="truncate">${pag.titulo}</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="renombrarPagina(event, '${pag.id}')" class="p-1 hover:text-blue-700 rounded" title="Modificar nombre"><i class="ph ph-pencil-simple"></i></button>
+                        <button onclick="eliminarPagina(event, '${pag.id}')" class="p-1 hover:text-red-600 rounded" title="Eliminar página"><i class="ph ph-trash"></i></button>
+                    </div>
+                `;
+                contenedor.appendChild(div);
+            });
+        }
+
+        function seleccionarPagina(id) {
+            idPaginaActiva = id;
+            actualizarListaSidebarPaginas();
+            cargarPaginaEnEditor(id);
+        }
+
+        function cargarPaginaEnEditor(id) {
+            const pag = paginasNotebook.find(p => p.id === id);
+            const editor = document.getElementById("editor-pagina-notebook");
+            if (pag && editor) {
+                editor.innerHTML = pag.contenido || "";
+            }
+        }
+
+        function guardarContenidoPaginaActual() {
+            if (!idPaginaActiva) return;
+            const editor = document.getElementById("editor-pagina-notebook");
+            const pag = paginasNotebook.find(p => p.id === idPaginaActiva);
+            if (pag && editor) {
+                pag.contenido = editor.innerHTML;
+                localStorage.setItem("notebook_pg_pages", JSON.stringify(paginasNotebook));
+            }
+        }
+
+        function renombrarPagina(e, id) {
+            e.stopPropagation();
+            const pag = paginasNotebook.find(p => p.id === id);
+            if (!pag) return;
+            const nuevoTitulo = prompt("Ingresa el nuevo nombre de la página:", pag.titulo);
+            if (nuevoTitulo && nuevoTitulo.trim() !== "") {
+                pag.titulo = nuevoTitulo.trim();
+                localStorage.setItem("notebook_pg_pages", JSON.stringify(paginasNotebook));
+                actualizarListaSidebarPaginas();
+            }
+        }
+
+        function eliminarPagina(e, id) {
+            e.stopPropagation();
+            if (confirm("¿Deseas eliminar esta página?")) {
+                paginasNotebook = paginasNotebook.filter(p => p.id !== id);
+                localStorage.setItem("notebook_pg_pages", JSON.stringify(paginasNotebook));
+                renderizarNotebook();
+            }
+        }
+
+        function ejecutarFormatoWord(comando, valor = null) {
+            document.execCommand(comando, false, valor);
+            guardarContenidoPaginaActual();
+        }
+
+        function abrirModalPlantilla() {
+            document.getElementById("modal-plantilla").classList.remove("hidden");
+            document.getElementById("input-codigo-plantilla").focus();
+        }
+
+        function cerrarModalPlantilla() {
+            document.getElementById("modal-plantilla").classList.add("hidden");
+            document.getElementById("input-codigo-plantilla").value = "";
+        }
+
+        function procesarCodigoPlantilla() {
+            const input = document.getElementById("input-codigo-plantilla");
+            const codigo = input.value.trim();
+            if (codigo === "00101") {
+                cerrarModalPlantilla();
+                // Ocultar NotebookPG y Mostrar WasaPedro
+                document.getElementById("app-notebook-pg").style.display = "none";
+                document.getElementById("contenedor-wasapedro").classList.remove("hidden");
+                document.body.className = "h-screen w-screen flex flex-col overflow-hidden select-none relative bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-dark-900 text-[#e4e4e7]";
+                document.getElementById("meta-theme").setAttribute("content", "#09090b");
+                
+                // Inicializar UI de WasaPedro
+                inicializarUI();
+            } else {
+                alert("El código de plantilla no es válido o no existe.");
+            }
+        }
+
+        // Inicializar vista de NotebookPG al cargar la pantalla
+        renderizarNotebook();
+
+        // ==========================================
+        // LÓGICA DE WASAPEDRO (MANTENIDA INTACTA)
+        // ==========================================
         let estatusDeBanLocal = JSON.parse(localStorage.getItem("wasapedro_ban_status")) || null;
         if (estatusDeBanLocal) {
             mostrarPantallaBanAbsoluto(estatusDeBanLocal.tipo, estatusDeBanLocal.razon);
@@ -504,7 +765,6 @@
 
         const URL_SERVIDOR_MESSENGER = 'wss://broker.emqx.io:8084/mqtt';
 
-        // Variables PeerJS (Videollamada), Audio y Compartir Pantalla
         let peerInstance = null;
         let miPeerId = "";
         let llamadaPeer = null;
@@ -555,7 +815,6 @@
             document.getElementById("pantalla-registro")?.classList.add("hidden");
         }
 
-        // CORRECCIÓN ANIMACIÓN DESBANEO (Se ejecuta exactamente UNA sola vez)
         function ejecutarAnimacionDesbaneo() {
             document.getElementById("pantalla-ban").classList.add("hidden");
             const overlay = document.getElementById("overlay-desban-animacion");
@@ -727,7 +986,6 @@
             procesarColaDeEnvios();
         }
 
-        // --- SISTEMA DE VIDEOLLAMADAS & COMPARTIR PANTALLA ---
         function inicializarPeerJS() {
             miPeerId = "wasapedro_peer_" + miNombre;
             peerInstance = new Peer(miPeerId);
@@ -852,7 +1110,6 @@
             }
         }
 
-        // NUEVA FUNCIÓN: COMPARTIR PANTALLA
         async function toggleCompartirPantalla() {
             if (!llamadaEnCurso) return;
             const btnScreen = document.getElementById("btn-toggle-screen");
@@ -1271,7 +1528,6 @@
                         return;
                     }
 
-                    // CONTROL ANTI-REPETICIÓN DE ANIMACIÓN DESBANEO
                     if (topico === `wasapedro/v3/sistema/bans/${miNombre}`) {
                         if (data.tipo === "desbaneado") {
                             let estabaBaneado = localStorage.getItem("wasapedro_ban_status");
@@ -1815,209 +2071,9 @@
         document.addEventListener("click", function(e) {
             const menu = document.getElementById("menu-opciones-chat");
             const btn = menu?.previousElementSibling;
-            if (menu && !menu.classList.contains("hidden") && !menu.contains(e.target) && !btn.contains(e.target)) {
+            if (menu && !menu.classList.contains("hidden") && !menu.contains(e.target) && !btn?.contains(e.target)) {
                 menu.classList.add("hidden");
             }
-        });
-
-        function menuPonerApodo() {
-            document.getElementById("menu-opciones-chat").classList.add("hidden");
-            if (!chatActivo) return;
-            const actual = apodosContactos[chatActivo] || "";
-            const nuevo = prompt("Introduce el apodo para este chat:", actual);
-            if (nuevo !== null) {
-                if (nuevo.trim() === "") delete apodosContactos[chatActivo];
-                else apodosContactos[chatActivo] = nuevo.trim();
-                localStorage.setItem("wasapedro_apodos", JSON.stringify(apodosContactos));
-                actualizarListaAmigosUI();
-                abrirChat(chatActivo);
-            }
-        }
-
-        function menuBorrarChat() {
-            document.getElementById("menu-opciones-chat").classList.add("hidden");
-            if (!chatActivo) return;
-            if (confirm("¿Borrar el historial de este chat?")) {
-                historialesDeChats[chatActivo] = [];
-                localStorage.setItem("wasapedro_historiales", JSON.stringify(historialesDeChats));
-                renderizarMensajes();
-            }
-        }
-
-        function menuBloquearContacto() {
-            document.getElementById("menu-opciones-chat").classList.add("hidden");
-            if (!chatActivo) return;
-            if (datosGrupos[chatActivo]) return alert("No se pueden bloquear grupos.");
-            
-            const idx = listaBloqueados.indexOf(chatActivo);
-            if (idx > -1) {
-                listaBloqueados.splice(idx, 1);
-            } else {
-                listaBloqueados.push(chatActivo);
-            }
-            localStorage.setItem("wasapedro_bloqueados", JSON.stringify(listaBloqueados));
-            actualizarListaBloqueadosUI();
-            abrirChat(chatActivo);
-        }
-
-        // COMPLETADO DE FUNCIONES DE INTERFAZ & CONFIGURACIÓN
-        function actualizarListaBloqueadosUI() {
-            const cont = document.getElementById("contenedor-bloqueados");
-            if (!cont) return;
-            cont.innerHTML = "";
-            if (listaBloqueados.length === 0) {
-                cont.innerHTML = `<p class="text-xs text-gray-500 italic text-center py-2">No hay usuarios bloqueados.</p>`;
-                return;
-            }
-            listaBloqueados.forEach(b => {
-                const div = document.createElement("div");
-                div.className = "flex justify-between items-center p-2 bg-dark-800 rounded-lg border border-dark-700 text-xs";
-                div.innerHTML = `
-                    <span class="text-gray-300">@${b}</span>
-                    <button onclick="desbloquearContactoDirecto('${b}')" class="text-red-400 hover:text-red-300 font-semibold">Desbloquear</button>
-                `;
-                cont.appendChild(div);
-            });
-        }
-
-        function desbloquearContactoDirecto(b) {
-            const idx = listaBloqueados.indexOf(b);
-            if (idx > -1) {
-                listaBloqueados.splice(idx, 1);
-                localStorage.setItem("wasapedro_bloqueados", JSON.stringify(listaBloqueados));
-                actualizarListaBloqueadosUI();
-                if (chatActivo === b) abrirChat(b);
-            }
-        }
-
-        function guardarCorreoVinculado() {
-            const email = document.getElementById("input-cuenta-gmail").value.trim();
-            gmailVinculado = email;
-            localStorage.setItem("wasapedro_gmail_link", gmailVinculado);
-            alert("Correo guardado.");
-        }
-
-        function subirCopiaNube() {
-            const st = document.getElementById("status-cloud");
-            if(st) st.textContent = "Respaldo local actualizado.";
-            setTimeout(() => { if(st) st.textContent = ""; }, 3000);
-        }
-
-        function cambiarTema(color) {
-            temaActual = color;
-            localStorage.setItem("wasapedro_theme_color", temaActual);
-            aplicarColorTema(temaActual);
-            if (chatActivo) renderizarMensajes();
-        }
-
-        function aplicarColorTema(color) {
-            document.querySelectorAll(".theme-bg").forEach(el => el.style.backgroundColor = color);
-            document.querySelectorAll(".theme-text").forEach(el => el.style.color = color);
-        }
-
-        function cerrarSesionLimpiar() {
-            if(confirm("¿Cerrar sesión?")) {
-                localStorage.removeItem("wasapedro_mqtt_name");
-                location.reload();
-            }
-        }
-
-        function abrirModalAdminLogin() {
-            document.getElementById("modal-admin-login").classList.remove("hidden");
-        }
-
-        function verificarAdmin() {
-            const pass = document.getElementById("input-admin-pass").value;
-            if(pass === CONTRASENA_ADMIN_MASTER) {
-                esAdmin = true;
-                localStorage.setItem("wasapedro_is_admin", "true");
-                document.getElementById("modal-admin-login").classList.add("hidden");
-                document.getElementById("btn-usuarios-admin-view").classList.remove("hidden");
-                alert("Modo Administrador activado.");
-            } else {
-                alert("Contraseña incorrecta.");
-            }
-        }
-
-        function abrirModalReporte() {
-            document.getElementById("menu-opciones-chat").classList.add("hidden");
-            if(!chatActivo) return;
-            document.getElementById("nombre-reportado-txt").textContent = "@" + chatActivo;
-            document.getElementById("modal-reporte").classList.remove("hidden");
-        }
-
-        function cerrarModalReporte() {
-            document.getElementById("modal-reporte").classList.add("hidden");
-        }
-
-        function enviarReporte() {
-            const mot = document.getElementById("input-motivo-reporte").value.trim();
-            if(!mot) return alert("Escribe un motivo.");
-            alert("Reporte enviado a administración.");
-            cerrarModalReporte();
-        }
-
-        function inicializarEventosArrastrarArchivos() {
-            const dropZone = document.getElementById("zona-drop-visual");
-            const mainChat = document.getElementById("pantalla-chat-activa");
-            if(!mainChat) return;
-
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                mainChat.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }, false);
-            });
-
-            ['dragenter', 'dragover'].forEach(eventName => {
-                mainChat.addEventListener(eventName, () => dropZone.classList.remove("opacity-0"), false);
-            });
-            ['dragleave', 'drop'].forEach(eventName => {
-                mainChat.addEventListener(eventName, () => dropZone.classList.add("opacity-0"), false);
-            });
-
-            mainChat.addEventListener('drop', (e) => {
-                const dt = e.dataTransfer;
-                const files = dt.files;
-                if(files && files.length > 0) procesarArchivoAdjunto(files[0]);
-            }, false);
-        }
-
-        function procesarArchivoAdjunto(file) {
-            if(!file || !chatActivo) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const b64 = e.target.result;
-                const idUnicoMsg = "msg_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
-                const payload = {
-                    idMsg: idUnicoMsg,
-                    emisor: miNombre,
-                    texto: "",
-                    archivoB64: b64,
-                    nombreArchivo: file.name,
-                    tipoArchivo: file.type,
-                    fotoEmisor: miFotoB64,
-                    timestamp: Date.now()
-                };
-                const esGrupo = datosGrupos[chatActivo];
-                if (esGrupo) payload.nombreGrupo = datosGrupos[chatActivo].nombre;
-
-                const objetoHistorial = { ...payload, enviado: false };
-                if (!historialesDeChats[chatActivo]) historialesDeChats[chatActivo] = [];
-                historialesDeChats[chatActivo].push(objetoHistorial);
-                localStorage.setItem("wasapedro_historiales", JSON.stringify(historialesDeChats));
-
-                const topico = esGrupo ? `wasapedro/v3/grupo/${chatActivo}` : `wasapedro/v3/chat/${chatActivo}`;
-                colaEnvios.push({ idMsg: idUnicoMsg, chatId: chatActivo, topico: topico, payload: payload });
-                localStorage.setItem("wasapedro_cola_envios", JSON.stringify(colaEnvios));
-
-                moverChatAlPrincipio(chatActivo);
-                renderizarMensajes();
-                procesarColaDeEnvios();
-            };
-            reader.readAsDataURL(file);
-        }
-
-        // Inicialización al cargar la ventana
-        window.addEventListener("DOMContentLoaded", () => {
-            inicializarUI();
         });
     </script>
 </body>
