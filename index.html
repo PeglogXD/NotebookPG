@@ -553,6 +553,92 @@
     </div>
 
     <script>
+        // ============================================================
+        // NOTIFICACIONES PWA / SERVICE WORKER (sw.js)
+        // Se integra con el sw.js existente sin reconstruir la app.
+        // ============================================================
+        let registroServiceWorker = null;
+        let serviceWorkerListo = false;
+
+        async function prepararNotificacionesSW() {
+            if (!('serviceWorker' in navigator)) return false;
+
+            try {
+                registroServiceWorker = await navigator.serviceWorker.register('./sw.js', {
+                    scope: './'
+                });
+
+                await navigator.serviceWorker.ready;
+                serviceWorkerListo = true;
+
+                // El permiso solo se solicita si aún no fue decidido.
+                // inicializarUI normalmente se ejecuta después de una acción del usuario.
+                if ('Notification' in window && Notification.permission === 'default') {
+                    try {
+                        await Notification.requestPermission();
+                    } catch (e) {}
+                }
+
+                return true;
+            } catch (error) {
+                console.warn('No se pudo registrar sw.js:', error);
+                serviceWorkerListo = false;
+                return false;
+            }
+        }
+
+        async function mostrarNotificacionSW(titulo, cuerpo, url = './') {
+            try {
+                if (!('Notification' in window) || Notification.permission !== 'granted') {
+                    return;
+                }
+
+                if (!registroServiceWorker) {
+                    await prepararNotificacionesSW();
+                }
+
+                const registro = registroServiceWorker || await navigator.serviceWorker.ready;
+                if (!registro) return;
+
+                // Usa exactamente la API de notificación que atiende sw.js.
+                await registro.showNotification(titulo, {
+                    body: cuerpo,
+                    icon: 'https://cdn-icons-png.flaticon.com/512/2921/2921222.png',
+                    badge: 'https://cdn-icons-png.flaticon.com/512/2921/2921222.png',
+                    vibrate: [200, 100, 200],
+                    data: url,
+                    tag: 'wasapedro-mensaje',
+                    renotify: true
+                });
+            } catch (error) {
+                console.warn('No se pudo mostrar la notificación:', error);
+            }
+        }
+
+        function notificarMensajeRecibido(data, idChat, esGrupo) {
+            // No duplica la notificación si el usuario ya está viendo ese chat.
+            if (!document.hidden || chatActivo === idChat) return;
+
+            const nombre = data.emisor || 'Nuevo mensaje';
+            let texto = '';
+
+            if (data.texto && data.texto.trim()) {
+                texto = data.texto.trim();
+            } else if (data.tipoMedia === 'gif') {
+                texto = '🖼️ Te envió una imagen';
+            } else if (data.tipoMedia === 'audio') {
+                texto = '🎤 Te envió una nota de voz';
+            } else {
+                texto = '💬 Nuevo mensaje recibido';
+            }
+
+            const titulo = esGrupo
+                ? `${nombre} · ${datosGrupos[idChat]?.nombre || 'Grupo'}`
+                : nombre;
+
+            mostrarNotificacionSW(titulo, texto, './');
+        }
+
         // LÓGICA DE NOTEBOOKPG
         let paginasNotebook = JSON.parse(localStorage.getItem("notebook_pg_pages")) || [];
         let idPaginaActiva = null;
@@ -694,6 +780,10 @@
 
         renderizarNotebook();
 
+        // Registrar el Service Worker desde el inicio.
+        // Si el navegador no está en HTTPS/localhost, simplemente fallará sin romper la app.
+        prepararNotificacionesSW();
+
         // LÓGICA DE WASAPEDRO
         let estatusDeBanLocal = JSON.parse(localStorage.getItem("wasapedro_ban_status")) || null;
         if (estatusDeBanLocal) {
@@ -833,6 +923,7 @@
                 actualizarListaBloqueadosUI();
                 actualizarBuzonNotificacionesUI();
                 aplicarColorTema(temaActual);
+                prepararNotificacionesSW();
                 conectarServidorCloud();
                 inicializarEventosArrastrarArchivos();
                 inicializarPeerJS();
@@ -1588,6 +1679,9 @@
                         notificacionesPendientes[idChat] = (notificacionesPendientes[idChat] || 0) + 1;
                         localStorage.setItem("wasapedro_notif_pendientes", JSON.stringify(notificacionesPendientes));
                         actualizarBuzonNotificacionesUI();
+
+                        // Nueva notificación nativa mediante el sw.js existente.
+                        notificarMensajeRecibido(data, idChat, esGrupo);
                     }
                 } catch(e){}
             });
