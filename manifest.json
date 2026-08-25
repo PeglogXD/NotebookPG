@@ -1,6 +1,6 @@
 {
-  "name": "WasaPedro Pro",
-  "short_name": "WasaPedro",
+  "name": "NotebookPG - PG Studio",
+  "short_name": "NotebookPG",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#0b141a",
@@ -8,7 +8,7 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/134/134937.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/2921/2921222.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
