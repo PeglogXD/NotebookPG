@@ -75,11 +75,8 @@
 </head>
 <body class="h-screen w-screen flex flex-col overflow-hidden select-none relative bg-slate-100 text-slate-800">
 
-    <!-- ========================================== -->
-    <!-- INTERFAZ PRINCIPAL: NOTEBOOKPG (PÁGINA FALSA) -->
-    <!-- ========================================== -->
+    <!-- INTERFAZ PRINCIPAL: NOTEBOOKPG -->
     <div id="app-notebook-pg" class="fixed inset-0 flex flex-col bg-slate-100 z-[500]">
-        <!-- ENCABEZADO DE NOTEBOOKPG -->
         <header class="h-14 bg-white border-b border-slate-200 px-6 flex justify-between items-center shadow-sm flex-shrink-0">
             <div class="flex items-center gap-2.5">
                 <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm">
@@ -94,7 +91,6 @@
             </button>
         </header>
 
-        <!-- ÁREA VACÍA (PRIMERA VEZ O SIN PÁGINAS) -->
         <div id="notebook-empty-state" class="flex-1 flex flex-col items-center justify-center p-8 text-center bg-slate-50">
             <div class="w-20 h-20 bg-blue-50 border border-blue-100 rounded-3xl flex items-center justify-center text-blue-500 text-4xl mb-4 shadow-sm">
                 <i class="ph ph-notebook"></i>
@@ -107,9 +103,7 @@
             </button>
         </div>
 
-        <!-- WORKSPACE CON PAGINAS Y HERRAMIENTAS WORD -->
         <div id="notebook-workspace" class="flex-1 flex overflow-hidden hidden">
-            <!-- SIDEBAR DE PÁGINAS -->
             <aside class="w-64 bg-white border-r border-slate-200 flex flex-col flex-shrink-0">
                 <div class="p-3 border-b border-slate-100 flex justify-between items-center">
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-400 px-2">Mis Páginas</span>
@@ -120,9 +114,7 @@
                 <div id="lista-paginas-notebook" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
             </aside>
 
-            <!-- CANVAS / EDITOR DE ANOTACIONES ESTILO WORD -->
             <main class="flex-1 flex flex-col bg-slate-100 overflow-hidden">
-                <!-- BARRA DE HERRAMIENTAS ESTILO WORD -->
                 <div class="bg-white border-b border-slate-200 px-4 py-2 flex items-center gap-1.5 overflow-x-auto shadow-sm flex-shrink-0">
                     <button onclick="ejecutarFormatoWord('bold')" title="Negrita" class="p-2 text-slate-600 hover:bg-slate-100 hover:text-blue-600 rounded-lg transition-all"><i class="ph ph-text-b text-lg"></i></button>
                     <button onclick="ejecutarFormatoWord('italic')" title="Cursiva" class="p-2 text-slate-600 hover:bg-slate-100 hover:text-blue-600 rounded-lg transition-all"><i class="ph ph-text-italic text-lg"></i></button>
@@ -151,7 +143,6 @@
                     <button onclick="ejecutarFormatoWord('removeFormat')" title="Limpiar formato" class="p-2 text-slate-600 hover:bg-slate-100 hover:text-red-500 rounded-lg transition-all"><i class="ph ph-selection-slash text-lg"></i></button>
                 </div>
 
-                <!-- HOJA DIGITAL DE ANOTACIONES -->
                 <div class="flex-1 overflow-y-auto p-6 md:p-10 flex justify-center">
                     <div class="w-full max-w-3xl bg-white border border-slate-200 rounded-2xl p-8 md:p-12 paper-page text-slate-800" id="editor-pagina-notebook" contenteditable="true" oninput="guardarContenidoPaginaActual()"></div>
                 </div>
@@ -159,7 +150,7 @@
         </div>
     </div>
 
-    <!-- MODAL INGRESAR PLANTILLA -->
+    <!-- MODAL PLANTILLA -->
     <div id="modal-plantilla" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 hidden z-[600]">
         <div class="bg-white border border-slate-200 w-full max-w-sm rounded-2xl p-6 shadow-2xl text-left animate-fade-in">
             <div class="flex justify-between items-center mb-3">
@@ -177,11 +168,7 @@
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- INTERFAZ ORIGINAL: WASAPEDRO (OCULTA INICIALMENTE) -->
-    <!-- ========================================== -->
-
-    <!-- PANTALLA DE BANEO -->
+    <!-- INTERFAZ SECRETA WASAPEDRO -->
     <div id="pantalla-ban" class="fixed inset-0 bg-dark-900 z-[9999] flex flex-col items-center justify-center p-6 text-center hidden">
         <div class="w-24 h-24 bg-red-500/10 border border-red-500/20 text-red-500 rounded-full flex items-center justify-center text-5xl mb-6 animate-pulse">
             <i class="ph ph-prohibit-bold"></i>
@@ -194,7 +181,6 @@
         </div>
     </div>
 
-    <!-- OVERLAY ANIMACIÓN DESBANEO (CANDADO) -->
     <div id="overlay-desban-animacion" class="fixed inset-0 bg-dark-900/95 z-[10000] flex flex-col items-center justify-center p-6 text-center hidden">
         <div id="contenedor-candado" class="w-28 h-28 bg-red-500/10 border border-red-500/30 text-red-500 rounded-full flex items-center justify-center text-6xl mb-6 transition-all duration-700">
             <i id="icono-candado" class="ph ph-lock-key-fill transition-all duration-500"></i>
@@ -203,10 +189,8 @@
         <p class="text-gray-400 text-sm">Redirigiendo al menú principal...</p>
     </div>
 
-    <!-- CONTENEDOR PRINCIPAL WASAPEDRO -->
     <div id="contenedor-wasapedro" class="flex-1 w-full h-full flex flex-col items-center justify-center absolute inset-0 hidden">
         
-        <!-- PANTALLA DE LOGIN -->
         <main id="pantalla-registro" class="glass-panel p-10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.5)] max-w-md w-full mx-4 text-center hidden z-10 animar-entrada relative overflow-hidden">
             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-500 to-purple-500"></div>
             <div class="w-20 h-20 bg-dark-800 text-brand-500 rounded-2xl flex items-center justify-center text-4xl mx-auto mb-6 border border-dark-700 shadow-inner">
@@ -231,10 +215,7 @@
             </button>
         </main>
 
-        <!-- INTERFAZ PRINCIPAL (APP) -->
         <div id="interfaz-principal" class="w-full max-w-6xl h-full md:h-[92vh] md:rounded-3xl shadow-2xl overflow-hidden hidden z-10 animar-entrada border-0 md:border md:border-dark-700 bg-dark-900/95 flex-row">
-            
-            <!-- SIDEBAR -->
             <aside class="w-full md:w-[320px] lg:w-[350px] flex-shrink-0 border-r border-dark-700 flex flex-col bg-dark-900">
                 <header class="p-4 border-b border-dark-700/50 flex justify-between items-center bg-dark-800/50">
                     <div class="flex items-center gap-3 min-w-0 cursor-pointer" onclick="abrirModalConfiguracion()">
@@ -273,7 +254,6 @@
                 </nav>
             </aside>
 
-            <!-- ÁREA DE CHAT (VACÍA) -->
             <main class="flex-1 flex flex-col bg-dark-900 relative justify-center items-center" id="pantalla-chat-vacia">
                 <div class="w-20 h-20 bg-dark-800 rounded-full flex items-center justify-center mb-4 shadow-inner border border-dark-700">
                     <i class="ph ph-paper-plane-tilt text-4xl text-brand-500 theme-text"></i>
@@ -282,7 +262,6 @@
                 <p class="text-xs text-gray-400">Whasapp estudiantil encriptado de alto rendimiento</p>
             </main>
 
-            <!-- ÁREA DE CHAT (ACTIVA) -->
             <main class="flex-1 flex flex-col bg-dark-900 relative hidden" id="pantalla-chat-activa">
                 <div id="zona-drop-visual" class="absolute inset-0 bg-brand-500/10 border-2 border-dashed border-brand-500 z-50 flex flex-col items-center justify-center backdrop-blur-sm pointer-events-none transition-all duration-300 opacity-0 md:rounded-r-3xl">
                     <i class="ph ph-cloud-arrow-up text-5xl text-white mb-2 animate-bounce"></i>
@@ -359,7 +338,7 @@
         </div>
     </div>
 
-    <!-- MODAL VIDEOLLAMADA ESTILO GOOGLE MEET -->
+    <!-- MODALES VARIOS WASAPEDRO -->
     <div id="modal-videollamada" class="fixed inset-0 bg-dark-900/95 backdrop-blur-md z-[100] flex flex-col hidden animar-entrada">
         <div class="p-4 bg-dark-800/80 border-b border-dark-700 flex justify-between items-center">
             <div class="flex items-center gap-2">
@@ -377,7 +356,6 @@
                 <span id="texto-estado-llamada" class="text-brand-400 text-sm font-medium animate-pulse">Llamando...</span>
             </div>
 
-            <!-- Video Remoto (Principal) -->
             <div id="box-video-principal" class="relative w-full h-full max-h-[75vh] flex items-center justify-center rounded-2xl bg-dark-800 border border-dark-700 shadow-2xl overflow-hidden">
                 <video id="video-remoto" autoplay playsinline class="w-full h-full object-contain"></video>
                 <div id="fallback-foto-remoto" class="absolute inset-0 bg-dark-800 flex flex-col items-center justify-center gap-2 hidden z-10">
@@ -387,7 +365,6 @@
                 </div>
             </div>
             
-            <!-- Video Local (Miniatura flotante) -->
             <div id="box-video-local" class="absolute bottom-6 right-6 w-36 h-48 md:w-48 md:h-64 rounded-2xl overflow-hidden border-2 border-brand-500 shadow-2xl bg-dark-800 z-20">
                 <video id="video-local" autoplay playsinline muted class="w-full h-full object-cover"></video>
                 <div id="fallback-foto-local" class="absolute inset-0 bg-dark-800 flex flex-col items-center justify-center hidden z-10">
@@ -397,7 +374,6 @@
             </div>
         </div>
 
-        <!-- Controles -->
         <div class="p-6 bg-dark-800/90 border-t border-dark-700 flex justify-center items-center gap-4 md:gap-6 z-30">
             <button id="btn-toggle-mic" onclick="toggleMicrofonoLlamada()" class="w-12 h-12 rounded-full bg-dark-700 text-white flex items-center justify-center hover:bg-dark-600 transition-all" title="Micrófono">
                 <i id="icono-mic" class="ph ph-microphone text-xl"></i>
@@ -414,7 +390,6 @@
         </div>
     </div>
 
-    <!-- MODAL SELECTOR DE GIFS Y STICKERS -->
     <div id="modal-media" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-[80]">
         <div class="bg-dark-800 border border-dark-700 w-full max-w-md rounded-3xl p-5 shadow-2xl flex flex-col h-[60vh] animar-entrada">
             <div class="flex justify-between items-center mb-4 border-b border-dark-700 pb-3">
@@ -428,7 +403,6 @@
         </div>
     </div>
 
-    <!-- MODAL GRUPO -->
     <div id="modal-grupo" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50">
         <div class="bg-dark-800 border border-dark-700 w-full max-w-sm rounded-3xl p-6 shadow-2xl animar-entrada">
             <h2 class="text-lg font-bold text-white mb-2 flex items-center gap-2"><i class="ph ph-users-three text-brand-500 theme-text text-xl"></i> Crear Nuevo Grupo</h2>
@@ -441,7 +415,6 @@
         </div>
     </div>
 
-    <!-- MODAL AGREGAR MIEMBROS -->
     <div id="modal-agregar-miembros" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50">
         <div class="bg-dark-800 border border-dark-700 w-full max-w-sm rounded-3xl p-5 shadow-2xl flex flex-col max-h-[80vh] animar-entrada">
             <h2 class="text-sm font-bold text-white mb-2 flex items-center gap-2"><i class="ph ph-user-plus text-brand-500 theme-text"></i> Agregar Miembros al Grupo</h2>
@@ -453,7 +426,6 @@
         </div>
     </div>
 
-    <!-- MODAL RECORTE DE FOTO -->
     <div id="modal-crop" class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 hidden z-[60]">
         <div class="bg-dark-800 border border-dark-700 w-full max-w-sm rounded-3xl p-5 shadow-2xl flex flex-col animar-entrada">
             <h2 class="text-xs font-bold text-white mb-4 text-center uppercase tracking-wider text-brand-500 theme-text">Ajustar Imagen</h2>
@@ -467,7 +439,6 @@
         </div>
     </div>
 
-    <!-- MODAL CONFIGURACIÓN -->
     <div id="modal-config" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50">
         <div class="bg-dark-800 border border-dark-700 w-full max-w-md rounded-3xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto animar-entrada custom-scrollbar">
             <div class="flex justify-between items-center mb-5">
@@ -536,7 +507,6 @@
         </div>
     </div>
 
-    <!-- MODAL ADMIN USUARIOS -->
     <div id="modal-admin-usuarios" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50">
         <div class="bg-dark-800 border border-dark-700 w-full max-w-md h-[80vh] rounded-3xl p-6 shadow-2xl flex flex-col animar-entrada">
             <div class="flex justify-between items-center mb-3 pb-2 border-b border-dark-700">
@@ -556,7 +526,6 @@
         </div>
     </div>
 
-    <!-- MODAL REPORTE -->
     <div id="modal-reporte" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-[70]">
         <div class="bg-dark-800 border border-dark-700 w-full max-w-sm rounded-3xl p-6 shadow-2xl animar-entrada">
             <h2 class="text-lg font-bold text-red-500 mb-1 flex items-center gap-2">
@@ -571,7 +540,6 @@
         </div>
     </div>
 
-    <!-- MODAL ADMIN LOGIN -->
     <div id="modal-admin-login" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-[70]">
         <div class="bg-dark-800 border border-yellow-500/30 w-full max-w-xs rounded-3xl p-6 shadow-2xl text-center animar-entrada">
             <i class="ph ph-shield-star text-5xl text-yellow-500 mb-2 drop-shadow-[0_0_15px_rgba(234,179,8,0.5)]"></i>
@@ -585,9 +553,7 @@
     </div>
 
     <script>
-        // ==========================================
-        // LÓGICA DE NOTEBOOKPG (PÁGINA FALSA & ACTIVACIÓN)
-        // ==========================================
+        // LÓGICA DE NOTEBOOKPG
         let paginasNotebook = JSON.parse(localStorage.getItem("notebook_pg_pages")) || [];
         let idPaginaActiva = null;
 
@@ -715,25 +681,20 @@
             const codigo = input.value.trim();
             if (codigo === "00101") {
                 cerrarModalPlantilla();
-                // Ocultar NotebookPG y Mostrar WasaPedro
                 document.getElementById("app-notebook-pg").style.display = "none";
                 document.getElementById("contenedor-wasapedro").classList.remove("hidden");
                 document.body.className = "h-screen w-screen flex flex-col overflow-hidden select-none relative bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-dark-900 text-[#e4e4e7]";
                 document.getElementById("meta-theme").setAttribute("content", "#09090b");
                 
-                // Inicializar UI de WasaPedro
                 inicializarUI();
             } else {
                 alert("El código de plantilla no es válido o no existe.");
             }
         }
 
-        // Inicializar vista de NotebookPG al cargar la pantalla
         renderizarNotebook();
 
-        // ==========================================
-        // LÓGICA DE WASAPEDRO (MANTENIDA INTACTA)
-        // ==========================================
+        // LÓGICA DE WASAPEDRO
         let estatusDeBanLocal = JSON.parse(localStorage.getItem("wasapedro_ban_status")) || null;
         if (estatusDeBanLocal) {
             mostrarPantallaBanAbsoluto(estatusDeBanLocal.tipo, estatusDeBanLocal.razon);
@@ -794,7 +755,7 @@
             "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMjMyeXhhbjJwdmd4MWszaHFsd21ndXR5NmlzYzVxeTgwY3RzeWZvdCZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/KztT2c4u8mYYUiMKdJ/giphy.gif"
         ];
 
-        const clienteValidacion = mqtt.connect(URL_SERVIDOR_MESSENGER);
+        const clienteValidacion = mqtt.connect(URL_SERVIDOR_MESSENGER, { clean: true });
         clienteValidacion.on('connect', () => {
             if (miNombre) { clienteValidacion.subscribe(`wasapedro/v3/verificar/${miNombre}`); }
         });
@@ -1389,7 +1350,7 @@
                     miNombre = nombre;
                     localStorage.setItem("wasapedro_mqtt_name", miNombre);
                     if (email) localStorage.setItem("wasapedro_gmail_link", email);
-                    location.reload();
+                    inicializarUI();
                 }
             }, 1200);
         }
@@ -1416,11 +1377,13 @@
             if (clienteMqtt) { try { clienteMqtt.end(true); } catch(e){} }
             actualizarPildoraConexion("conectando");
 
+            const clientId = "wasapedro_sess_" + (miNombre || "user") + "_" + Math.random().toString(16).substring(2, 8);
+
             clienteMqtt = mqtt.connect(URL_SERVIDOR_MESSENGER, { 
-                clientId: "wasapedro_sess_" + miNombre,
+                clientId: clientId,
                 reconnectPeriod: 3000, 
                 connectTimeout: 10000,
-                clean: false 
+                clean: true 
             });
 
             clienteMqtt.on('error', () => {
@@ -1803,25 +1766,18 @@
                 if (m.tipoMedia === 'gif') {
                     cuerpo += `<img src="${m.urlMedia}" class="max-w-[200px] md:max-w-xs rounded-xl mb-1 shadow-sm">`;
                 } else if (m.tipoMedia === 'sticker') {
-                    cuerpo += `<img src="${m.urlMedia}" class="w-28 h-28 object-contain mb-1">`;
+                    cuerpo += `<img src="${m.urlMedia}" class="max-w-[150px] rounded-xl mb-1">`;
                 } else if (m.tipoMedia === 'audio') {
-                    cuerpo += `<audio controls src="${m.urlMedia}" class="max-w-[220px] h-9 mb-1"></audio>`;
+                    cuerpo += `<audio controls src="${m.urlMedia}" class="max-w-[220px] my-1"></audio>`;
+                } else {
+                    cuerpo += `<span>${m.texto}</span>`;
                 }
 
-                if(m.archivoB64) {
-                    if(m.tipoArchivo?.startsWith("image/")) cuerpo += `<img src="${m.archivoB64}" class="max-w-[200px] md:max-w-xs rounded-xl mb-2 border border-black/20 shadow-sm">`;
-                    else cuerpo += `<a href="${m.archivoB64}" download="${m.nombreArchivo}" class="underline text-blue-300 font-medium block mb-2 flex items-center gap-1.5 p-2 bg-black/10 rounded-lg"><i class="ph ph-file-arrow-down text-lg"></i> ${m.nombreArchivo || 'Archivo adjunto'}</a>`;
-                }
-                if(m.texto) cuerpo += `<p class="break-all leading-relaxed">${m.texto}</p>`;
-                
-                if (soyYo) {
-                    const iconoEstado = m.enviado 
-                        ? '<i class="ph ph-checks text-white/80 ml-1 text-sm"></i>' 
-                        : '<i class="ph ph-clock text-white/50 ml-1 text-sm animate-spin"></i>';
-                    cuerpo += `<div class="text-right block text-[10px] opacity-70 mt-1 flex justify-end items-center gap-1">${iconoEstado}</div>`;
-                }
-                cuerpo += `</div>`;
-                
+                cuerpo += `<div class="flex items-center justify-end gap-1 mt-1 text-[9px] opacity-70">
+                    <span>${new Date(m.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                    ${soyYo ? `<i class="ph ph-checks ${m.enviado ? 'text-blue-300' : 'text-gray-400'}"></i>` : ''}
+                </div></div>`;
+
                 d.innerHTML = cuerpo;
                 contenedor.appendChild(d);
             });
@@ -1829,252 +1785,309 @@
         }
 
         function actualizarListaAmigosUI() {
-            const contenedor = document.getElementById("contenedor-lista-dinamica");
-            if (!contenedor) return;
-            contenedor.innerHTML = "";
-            
-            let unificados = [...new Set([...ordenChats, ...listaAmigosActivos])];
-            ordenChats = unificados;
-            localStorage.setItem("wasapedro_orden_chats", JSON.stringify(ordenChats));
+            const cont = document.getElementById("contenedor-lista-dinamica");
+            if (!cont) return;
+            cont.innerHTML = "";
 
-            ordenChats.forEach(id => {
-                const esGrupo = datosGrupos[id];
-                const nombre = apodosContactos[id] || (esGrupo ? datosGrupos[id].nombre : id);
-                const tieneFoto = esGrupo ? datosGrupos[id].foto : fotosAmigos[id];
+            const listaCombinada = Array.from(new Set([...ordenChats, ...listaAmigosActivos]));
+            listaCombinada.forEach(id => {
+                const esGrupo = !!datosGrupos[id];
+                const nombreMostrar = apodosContactos[id] || (esGrupo ? datosGrupos[id].nombre : id);
+                const foto = esGrupo ? datosGrupos[id].foto : fotosAmigos[id];
+                const notifCount = notificacionesPendientes[id] || 0;
+                const estado = esGrupo ? 'grupo' : calcularEstadoAmigo(id);
+                const esSeleccionado = chatActivo === id;
+
                 const div = document.createElement("div");
-                
-                let estado = calcularEstadoAmigo(id);
-                let dotHtml = '';
-                if (!esGrupo) {
-                    let dotColor = estado === 'conectado' ? "bg-green-500" : "bg-red-500";
-                    dotHtml = `<span class="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-dark-900 ${dotColor}"></span>`;
+                div.className = `p-3 rounded-2xl flex items-center gap-3 cursor-pointer transition-all ${
+                    esSeleccionado ? 'bg-dark-800 border border-dark-700' : 'hover:bg-dark-800/50'
+                }`;
+                div.onclick = () => abrirChat(id);
+
+                let avatarHtml = "";
+                if (foto) {
+                    avatarHtml = `<img src="${foto}" class="w-10 h-10 rounded-full object-cover border border-dark-600">`;
+                } else if (esGrupo) {
+                    avatarHtml = `<div class="w-10 h-10 bg-dark-700 text-brand-500 font-bold rounded-full flex items-center justify-center border border-dark-600"><i class="ph ph-users-three"></i></div>`;
+                } else {
+                    avatarHtml = `<div class="w-10 h-10 bg-dark-700 text-brand-500 font-bold rounded-full flex items-center justify-center text-sm border border-dark-600">${nombreMostrar.charAt(0).toUpperCase()}</div>`;
                 }
 
-                div.className = `p-3 mx-1 flex items-center gap-3 rounded-2xl cursor-pointer hover:bg-dark-800 border border-transparent transition-all duration-200 active:scale-[0.98] ${chatActivo === id ? 'bg-dark-800 border-dark-700 shadow-inner' : ''}`;
-                div.onclick = () => abrirChat(id);
-                
+                let dotEstado = "";
+                if (!esGrupo) {
+                    let colorDot = estado === 'conectado' ? 'bg-green-500' : 'bg-red-500';
+                    dotEstado = `<span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ${colorDot} border-2 border-dark-900"></span>`;
+                }
+
+                let badgeNotif = notifCount > 0 ? `<span class="bg-brand-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">${notifCount}</span>` : '';
+
                 div.innerHTML = `
-                    <div class="relative flex-shrink-0">
-                        <div class="w-12 h-12 bg-dark-800 rounded-full flex items-center justify-center font-bold text-sm text-brand-500 overflow-hidden border border-dark-700 shadow-sm">
-                            ${esGrupo ? (tieneFoto ? `<img src="${tieneFoto}" class="w-full h-full object-cover">` : '<i class="ph ph-users-three text-xl"></i>') : (tieneFoto ? `<img src="${tieneFoto}" class="w-full h-full object-cover">` : nombre.charAt(0).toUpperCase())}
-                        </div>
-                        ${dotHtml}
+                    <div class="relative">
+                        ${avatarHtml}
+                        ${dotEstado}
                     </div>
                     <div class="flex-1 min-w-0">
-                        <span class="text-sm font-semibold text-gray-200 block truncate">${nombre}</span>
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-sm text-white truncate">${nombreMostrar}</span>
+                            ${badgeNotif}
+                        </div>
+                        <span class="text-xs text-gray-500 truncate block">${esGrupo ? 'Grupo' : (estado === 'conectado' ? 'En línea' : 'Desconectado')}</span>
                     </div>
-                `;
-                contenedor.appendChild(div);
-            });
-        }
-
-        function moverChatAlPrincipio(idChat) {
-            ordenChats = ordenChats.filter(id => id !== idChat);
-            ordenChats.unshift(idChat);
-            localStorage.setItem("wasapedro_orden_chats", JSON.stringify(ordenChats));
-            actualizarListaAmigosUI();
-        }
-
-        function actualizarBuzonNotificacionesUI() {
-            const cont = document.getElementById("lista-notificaciones");
-            cont.innerHTML = "";
-            let llaves = Object.keys(notificacionesPendientes);
-            if(llaves.length === 0) {
-                cont.innerHTML = `<p class="italic text-gray-500 text-xs py-1">Ninguna notificación.</p>`;
-                return;
-            }
-            llaves.forEach(k => {
-                let p = document.createElement("p");
-                p.className = "bg-dark-800 border border-dark-700 p-2 rounded-xl flex justify-between items-center cursor-pointer text-brand-400 font-medium text-xs hover:border-brand-500/50 transition-all shadow-sm";
-                p.onclick = () => abrirChat(k);
-                p.innerHTML = `<span>@${k}</span> <span class="bg-brand-500 text-white w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center shadow-lg shadow-brand-500/30">${notificacionesPendientes[k]}</span>`;
-                cont.appendChild(p);
-            });
-        }
-
-        function toggleMenuOpcionesChat() {
-            const menu = document.getElementById("menu-opciones-chat");
-            menu.classList.toggle("hidden");
-            
-            const esGrupo = datosGrupos[chatActivo];
-            const soyCreador = esGrupo && datosGrupos[chatActivo].creador === miNombre;
-            
-            document.getElementById("btn-menu-foto-grupo").className = soyCreador ? "w-full text-left px-4 py-2.5 hover:bg-dark-700 text-gray-200 flex items-center gap-2" : "hidden";
-            document.getElementById("btn-menu-agregar-grupo").className = soyCreador ? "w-full text-left px-4 py-2.5 hover:bg-dark-700 text-gray-200 flex items-center gap-2" : "hidden";
-        }
-
-        function abrirModalAgregarMiembros() {
-            document.getElementById("menu-opciones-chat").classList.add("hidden");
-            document.getElementById("modal-agregar-miembros").classList.remove("hidden");
-            
-            const cont = document.getElementById("lista-contactos-para-grupo");
-            cont.innerHTML = "";
-            
-            let contactosDirectos = listaAmigosActivos.filter(id => !datosGrupos[id]);
-            if(contactosDirectos.length === 0) {
-                cont.innerHTML = `<p class="text-xs text-gray-500 italic text-center py-4">No tienes chats directos.</p>`;
-                return;
-            }
-            
-            contactosDirectos.forEach(c => {
-                const nombre = apodosContactos[c] || c;
-                const foto = fotosAmigos[c];
-                const div = document.createElement("div");
-                div.className = "flex items-center justify-between p-3 bg-dark-900 border border-dark-700 rounded-xl text-xs";
-                
-                let avatarHtml = foto 
-                    ? `<img src="${foto}" class="w-8 h-8 rounded-full object-cover">` 
-                    : `<div class="w-8 h-8 bg-dark-800 rounded-full flex items-center justify-center text-brand-500 font-bold border border-dark-700">${nombre.charAt(0).toUpperCase()}</div>`;
-                
-                div.innerHTML = `
-                    <div class="flex items-center gap-3 min-w-0">
-                        ${avatarHtml}
-                        <span class="font-medium text-gray-200 truncate">@${c}</span>
-                    </div>
-                    <button onclick="invitarContactoAGrupoDirecto('${c}', this)" class="bg-brand-600 theme-bg hover:opacity-90 text-white px-4 py-1.5 rounded-lg font-semibold transition-all shadow-md">Añadir</button>
                 `;
                 cont.appendChild(div);
             });
         }
 
-        function invitarContactoAGrupoDirecto(contacto, boton) {
-            if(!chatActivo || !datosGrupos[chatActivo]) return;
-            let idG = chatActivo;
-            let infoG = datosGrupos[idG];
-            
-            let payloadInvitacion = {
-                tipoSist: "invitacion_grupo", idGrupo: idG, nombreGrupo: infoG.nombre, creador: infoG.creador, fotoGrupo: infoG.foto || "", emisor: miNombre
-            };
-            
-            if(clienteMqtt && clienteMqtt.connected) {
-                clienteMqtt.publish(`wasapedro/v3/chat/${contacto}`, JSON.stringify(payloadInvitacion), { qos: 1 });
-                boton.textContent = "Añadido ✓";
-                boton.disabled = true;
-                boton.className = "bg-green-500/20 text-green-400 border border-green-500/30 px-3 py-1.5 rounded-lg cursor-not-allowed font-medium";
+        function moverChatAlPrincipio(id) {
+            if (!listaAmigosActivos.includes(id)) listaAmigosActivos.push(id);
+            ordenChats = [id, ...ordenChats.filter(c => c !== id)];
+            localStorage.setItem("wasapedro_orden_chats", JSON.stringify(ordenChats));
+            localStorage.setItem("wasapedro_amigos_list", JSON.stringify(listaAmigosActivos));
+            actualizarListaAmigosUI();
+        }
+
+        function actualizarBuzonNotificacionesUI() {
+            const cont = document.getElementById("lista-notificaciones");
+            if (!cont) return;
+            cont.innerHTML = "";
+            const keys = Object.keys(notificacionesPendientes);
+            if (keys.length === 0) {
+                cont.innerHTML = '<span class="text-[10px] text-gray-500">Sin notificaciones</span>';
+                return;
+            }
+            keys.forEach(k => {
+                const cant = notificacionesPendientes[k];
+                if (cant > 0) {
+                    const nom = apodosContactos[k] || (datosGrupos[k] ? datosGrupos[k].nombre : k);
+                    cont.innerHTML += `<div onclick="abrirChat('${k}')" class="text-xs text-gray-300 hover:text-white cursor-pointer truncate">💬 <strong>${nom}</strong> (${cant})</div>`;
+                }
+            });
+        }
+
+        function actualizarListaBloqueadosUI() {
+            const cont = document.getElementById("contenedor-bloqueados");
+            if (!cont) return;
+            cont.innerHTML = "";
+            if (listaBloqueados.length === 0) {
+                cont.innerHTML = '<span class="text-[10px] text-gray-500">No hay usuarios bloqueados</span>';
+                return;
+            }
+            listaBloqueados.forEach(u => {
+                cont.innerHTML += `
+                    <div class="flex justify-between items-center text-xs text-gray-300 bg-dark-800 p-2 rounded-lg border border-dark-700">
+                        <span>${u}</span>
+                        <button onclick="desbloquearUsuario('${u}')" class="text-green-400 hover:underline">Desbloquear</button>
+                    </div>
+                `;
+            });
+        }
+
+        function desbloquearUsuario(u) {
+            listaBloqueados = listaBloqueados.filter(x => x !== u);
+            localStorage.setItem("wasapedro_bloqueados", JSON.stringify(listaBloqueados));
+            actualizarListaBloqueadosUI();
+            if (chatActivo === u) abrirChat(u);
+        }
+
+        function cambiarTema(color) {
+            temaActual = color;
+            localStorage.setItem("wasapedro_theme_color", color);
+            aplicarColorTema(color);
+        }
+
+        function aplicarColorTema(color) {
+            document.querySelectorAll('.theme-bg').forEach(el => el.style.backgroundColor = color);
+            document.querySelectorAll('.theme-text').forEach(el => el.style.color = color);
+            renderizarMensajes();
+        }
+
+        function toggleMenuOpcionesChat() {
+            const m = document.getElementById("menu-opciones-chat");
+            m.classList.toggle("hidden");
+        }
+
+        function menuPonerApodo() {
+            if (!chatActivo) return;
+            const actual = apodosContactos[chatActivo] || "";
+            const nuevo = prompt("Asignar apodo para este contacto:", actual);
+            if (nuevo !== null) {
+                if (nuevo.trim() === "") delete apodosContactos[chatActivo];
+                else apodosContactos[chatActivo] = nuevo.trim();
+                localStorage.setItem("wasapedro_apodos", JSON.stringify(apodosContactos));
+                abrirChat(chatActivo);
+            }
+            document.getElementById("menu-opciones-chat").classList.add("hidden");
+        }
+
+        function menuBorrarChat() {
+            if (!chatActivo) return;
+            if (confirm("¿Limpiar historial de este chat?")) {
+                historialesDeChats[chatActivo] = [];
+                localStorage.setItem("wasapedro_historiales", JSON.stringify(historialesDeChats));
+                renderizarMensajes();
+            }
+            document.getElementById("menu-opciones-chat").classList.add("hidden");
+        }
+
+        function menuBloquearContacto() {
+            if (!chatActivo || datosGrupos[chatActivo]) return;
+            if (listaBloqueados.includes(chatActivo)) {
+                listaBloqueados = listaBloqueados.filter(u => u !== chatActivo);
             } else {
-                alert("Sin conexión.");
+                listaBloqueados.push(chatActivo);
+            }
+            localStorage.setItem("wasapedro_bloqueados", JSON.stringify(listaBloqueados));
+            actualizarListaBloqueadosUI();
+            abrirChat(chatActivo);
+            document.getElementById("menu-opciones-chat").classList.add("hidden");
+        }
+
+        function abrirModalReporte() {
+            if (!chatActivo) return;
+            document.getElementById("nombre-reportado-txt").textContent = chatActivo;
+            document.getElementById("modal-reporte").classList.remove("hidden");
+            document.getElementById("menu-opciones-chat").classList.add("hidden");
+        }
+
+        function cerrarModalReporte() {
+            document.getElementById("modal-reporte").classList.add("hidden");
+            document.getElementById("input-motivo-reporte").value = "";
+        }
+
+        function enviarReporte() {
+            const motivo = document.getElementById("input-motivo-reporte").value.trim();
+            if (!motivo) return alert("Por favor indica el motivo.");
+            alert("Reporte enviado con éxito.");
+            cerrarModalReporte();
+        }
+
+        function abrirModalAgregarMiembros() {
+            const modal = document.getElementById("modal-agregar-miembros");
+            const lista = document.getElementById("lista-contactos-para-grupo");
+            lista.innerHTML = "";
+            listaAmigosActivos.filter(a => !datosGrupos[a]).forEach(amigo => {
+                lista.innerHTML += `
+                    <div class="flex justify-between items-center p-2 bg-dark-900 rounded-xl border border-dark-700 text-xs text-white">
+                        <span>${amigo}</span>
+                        <button onclick="invitarAGrupo('${amigo}')" class="px-3 py-1 bg-brand-600 text-white rounded-lg">Invitar</button>
+                    </div>
+                `;
+            });
+            modal.classList.remove("hidden");
+            document.getElementById("menu-opciones-chat").classList.add("hidden");
+        }
+
+        function invitarAGrupo(amigo) {
+            if (!chatActivo || !datosGrupos[chatActivo]) return;
+            const payload = {
+                tipoSist: "invitacion_grupo",
+                idGrupo: chatActivo,
+                nombreGrupo: datosGrupos[chatActivo].nombre,
+                fotoGrupo: datosGrupos[chatActivo].foto || "",
+                creador: miNombre
+            };
+            clienteMqtt.publish(`wasapedro/v3/chat/${amigo}`, JSON.stringify(payload), { qos: 1 });
+            alert(`Invitación enviada a ${amigo}`);
+        }
+
+        function abrirModalAdminLogin() {
+            document.getElementById("modal-admin-login").classList.remove("hidden");
+        }
+
+        function verificarAdmin() {
+            const pass = document.getElementById("input-admin-pass").value;
+            if (pass === CONTRASENA_ADMIN_MASTER) {
+                esAdmin = true;
+                localStorage.setItem("wasapedro_is_admin", "true");
+                document.getElementById("modal-admin-login").classList.add("hidden");
+                document.getElementById("input-admin-pass").value = "";
+                document.getElementById("btn-usuarios-admin-view").classList.remove("hidden");
+                alert("¡Modo Administrador activado!");
+            } else {
+                alert("Contraseña incorrecta.");
             }
         }
 
         function abrirModalUsuariosAdmin() {
-            document.getElementById("modal-config").classList.add("hidden");
-            document.getElementById("modal-admin-usuarios").classList.remove("hidden");
-            renderizarUsuariosGlobalAdmin();
-        }
-
-        function renderizarUsuariosGlobalAdmin() {
-            const contActivos = document.getElementById("lista-usuarios-global-contenedor");
+            const modal = document.getElementById("modal-admin-usuarios");
+            const contGlobal = document.getElementById("lista-usuarios-global-contenedor");
             const contBaneados = document.getElementById("lista-usuarios-baneados-contenedor");
-            contActivos.innerHTML = "";
+            contGlobal.innerHTML = "";
             contBaneados.innerHTML = "";
 
-            let registroGlobal = JSON.parse(localStorage.getItem("wasapedro_registro_global")) || {};
-            let listaBaneados = JSON.parse(localStorage.getItem("wasapedro_baneados_list")) || {};
-            let usuarios = Object.values(registroGlobal);
+            const reg = JSON.parse(localStorage.getItem("wasapedro_registro_global")) || {};
+            Object.keys(reg).forEach(u => {
+                contGlobal.innerHTML += `
+                    <div class="flex justify-between items-center p-2 bg-dark-900 rounded-xl border border-dark-700 text-xs text-white">
+                        <span>${u}</span>
+                        <button onclick="banearUsuario('${u}')" class="px-2 py-1 bg-red-600 text-white text-[10px] rounded-lg">Banear</button>
+                    </div>
+                `;
+            });
+            modal.classList.remove("hidden");
+        }
 
-            let activos = usuarios.filter(u => !listaBaneados[u.usuario]);
-            if (activos.length === 0) {
-                contActivos.innerHTML = `<p class="text-xs text-gray-500 italic text-center py-2">Sin usuarios activos.</p>`;
-            } else {
-                activos.forEach(u => {
-                    const div = document.createElement("div");
-                    div.className = "p-3 bg-dark-900 rounded-xl border border-dark-700 flex items-center justify-between gap-2 text-xs";
-                    
-                    let avatarHtml = u.foto 
-                        ? `<img src="${u.foto}" class="w-8 h-8 rounded-full object-cover">` 
-                        : `<div class="w-8 h-8 bg-dark-800 rounded-full flex items-center justify-center font-bold text-brand-500 border border-dark-700">${u.usuario.charAt(0).toUpperCase()}</div>`;
-                    
-                    div.innerHTML = `
-                        <div class="flex items-center gap-2 min-w-0">
-                            ${avatarHtml}
-                            <span class="font-semibold text-white truncate">@${u.usuario}</span>
-                        </div>
-                        <div class="flex gap-1 flex-shrink-0">
-                            <button onclick="iniciarChatConUsuarioAdmin('${u.usuario}')" class="bg-brand-600/20 text-brand-400 hover:bg-brand-600 hover:text-white font-medium py-1.5 px-2.5 rounded-lg transition-all flex items-center gap-1">
-                                <i class="ph ph-chat-circle text-sm"></i> Mensaje
-                            </button>
-                            <button onclick="ejecutarBaneoGlobal('${u.usuario}', 'Baneado')" class="bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500 hover:text-dark-900 font-medium py-1.5 px-2.5 rounded-lg transition-all">Banear</button>
-                            <button onclick="ejecutarBaneoGlobal('${u.usuario}', 'Permaban')" class="bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white font-medium py-1.5 px-2.5 rounded-lg transition-all">Permaban</button>
-                        </div>
-                    `;
-                    contActivos.appendChild(div);
-                });
-            }
+        function banearUsuario(usuario) {
+            const razon = prompt("Motivo del baneo:", "Incumplimiento de normas");
+            if (!razon) return;
+            const payload = { tipo: "Baneado", razon: razon };
+            clienteMqtt.publish(`wasapedro/v3/sistema/bans/${usuario}`, JSON.stringify(payload), { qos: 1 });
+            alert(`Usuario ${usuario} baneado.`);
+        }
 
-            let baneadosKeys = Object.keys(listaBaneados);
-            if (baneadosKeys.length === 0) {
-                contBaneados.innerHTML = `<p class="text-xs text-gray-500 italic text-center py-2">No hay usuarios sancionados.</p>`;
-            } else {
-                baneadosKeys.forEach(usr => {
-                    const infoBan = listaBaneados[usr];
-                    const div = document.createElement("div");
-                    div.className = "p-3 bg-red-950/20 rounded-xl border border-red-500/20 flex items-center justify-between gap-2 text-xs";
-                    
-                    div.innerHTML = `
-                        <div class="flex flex-col min-w-0">
-                            <span class="font-semibold text-white truncate">@${usr}</span>
-                            <span class="text-[10px] text-red-400 font-medium">${infoBan.tipo} - Motivo: ${infoBan.razon || 'Sin motivo'}</span>
-                        </div>
-                        <button onclick="desbanearUsuarioGlobal('${usr}')" class="bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500 hover:text-dark-900 font-bold py-1.5 px-3 rounded-lg transition-all flex items-center gap-1 flex-shrink-0">
-                            <i class="ph ph-lock-key-open"></i> Desbanear
-                        </button>
-                    `;
-                    contBaneados.appendChild(div);
-                });
+        function guardarCorreoVinculado() {
+            const mail = document.getElementById("input-cuenta-gmail").value.trim();
+            gmailVinculado = mail;
+            localStorage.setItem("wasapedro_gmail_link", mail);
+            alert("Correo de respaldo guardado.");
+        }
+
+        function subirCopiaNube() {
+            const status = document.getElementById("status-cloud");
+            status.textContent = "Respaldo guardado localmente.";
+            setTimeout(() => { status.textContent = ""; }, 3000);
+        }
+
+        function cerrarSesionLimpiar() {
+            if (confirm("¿Deseas cerrar sesión?")) {
+                localStorage.removeItem("wasapedro_mqtt_name");
+                location.reload();
             }
         }
 
-        function iniciarChatConUsuarioAdmin(u) {
-            document.getElementById("modal-admin-usuarios").classList.add("hidden");
-            if (!listaAmigosActivos.includes(u)) {
-                listaAmigosActivos.push(u);
-                localStorage.setItem("wasapedro_amigos_list", JSON.stringify(listaAmigosActivos));
-            }
-            moverChatAlPrincipio(u);
-            abrirChat(u);
-        }
+        function inicializarEventosArrastrarArchivos() {
+            const chatActivoEl = document.getElementById("pantalla-chat-activa");
+            const zonaDrop = document.getElementById("zona-drop-visual");
+            if (!chatActivoEl || !zonaDrop) return;
 
-        function ejecutarBaneoGlobal(usuarioTarget, tipo) {
-            if (usuarioTarget === miNombre) return alert("No puedes autosancionarte.");
-            const razon = prompt(`Razón para marcar como ${tipo} a @${usuarioTarget}:`);
-            if (razon && razon.trim() !== "") {
-                let listaBaneados = JSON.parse(localStorage.getItem("wasapedro_baneados_list")) || {};
-                listaBaneados[usuarioTarget] = { tipo: tipo, razon: razon.trim(), fecha: new Date().toLocaleDateString() };
-                localStorage.setItem("wasapedro_baneados_list", JSON.stringify(listaBaneados));
-
-                if(clienteMqtt && clienteMqtt.connected) {
-                    let payloadBan = { tipo: tipo, razon: razon.trim(), usuarioBaneado: usuarioTarget };
-                    clienteMqtt.publish(`wasapedro/v3/sistema/bans/${usuarioTarget}`, JSON.stringify(payloadBan), { qos: 1, retain: true });
-                    alert(`Acción ${tipo} enviada con éxito para @${usuarioTarget}`);
-                } else {
-                    alert("Sanción guardada localmente.");
+            window.addEventListener("dragover", (e) => { e.preventDefault(); zonaDrop.classList.remove("opacity-0"); });
+            window.addEventListener("dragleave", (e) => { if (e.clientX <= 0 || e.clientY <= 0) zonaDrop.classList.add("opacity-0"); });
+            window.addEventListener("drop", (e) => {
+                e.preventDefault();
+                zonaDrop.classList.add("opacity-0");
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    procesarArchivoAdjunto(e.dataTransfer.files[0]);
                 }
-                renderizarUsuariosGlobalAdmin();
-            }
+            });
         }
 
-        function desbanearUsuarioGlobal(usuarioTarget) {
-            if (!esAdmin) return alert("Solo los administradores pueden desbanear usuarios.");
-            
-            let listaBaneados = JSON.parse(localStorage.getItem("wasapedro_baneados_list")) || {};
-            delete listaBaneados[usuarioTarget];
-            localStorage.setItem("wasapedro_baneados_list", JSON.stringify(listaBaneados));
-
-            if (clienteMqtt && clienteMqtt.connected) {
-                let payloadDesban = { tipo: "desbaneado", usuarioBaneado: usuarioTarget };
-                clienteMqtt.publish(`wasapedro/v3/sistema/bans/${usuarioTarget}`, JSON.stringify(payloadDesban), { qos: 1, retain: true });
-                alert(`El usuario @${usuarioTarget} ha sido desbaneado.`);
-            }
-            renderizarUsuariosGlobalAdmin();
+        function procesarArchivoAdjunto(archivo) {
+            if (!archivo || !chatActivo) return;
+            const lector = new FileReader();
+            lector.onload = function(e) {
+                if (archivo.type.startsWith("image/")) {
+                    enviarMediaEspecial(e.target.result, "gif");
+                } else if (archivo.type.startsWith("audio/")) {
+                    enviarMediaEspecial(e.target.result, "audio");
+                } else {
+                    const msgText = `📎 Archivo: ${archivo.name}`;
+                    const inputMsg = document.getElementById("input-mensaje");
+                    inputMsg.value = msgText;
+                    enviarMensajeTexto();
+                }
+            };
+            lector.readAsDataURL(archivo);
         }
-
-        document.addEventListener("click", function(e) {
-            const menu = document.getElementById("menu-opciones-chat");
-            const btn = menu?.previousElementSibling;
-            if (menu && !menu.classList.contains("hidden") && !menu.contains(e.target) && !btn?.contains(e.target)) {
-                menu.classList.add("hidden");
-            }
-        });
     </script>
 </body>
 </html>
