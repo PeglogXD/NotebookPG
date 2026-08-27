@@ -1252,10 +1252,19 @@
             const overlay = document.getElementById('overlay-espera-llamada');
             const panel = document.getElementById('panel-participantes-llamada');
             const boxPrincipal = document.getElementById('box-video-principal');
+            const boxLocal = document.getElementById('box-video-local');
             const titulo = document.getElementById('titulo-videollamada');
             const estado = document.getElementById('texto-estado-llamada');
 
             document.getElementById('modal-videollamada').classList.remove('hidden');
+
+            // En llamadas grupales mi cámara ya aparece dentro de
+            // "panel-participantes-llamada" junto a mi nombre y "(Tú)".
+            // Por eso ocultamos únicamente el cuadro flotante duplicado.
+            // En llamadas de 2 personas se mantiene visible.
+            if (boxLocal) {
+                boxLocal.classList.toggle('hidden', !!esGrupo);
+            }
             document.getElementById('fallback-foto-remoto').classList.add('hidden');
             document.getElementById('video-remoto').srcObject = null;
 
@@ -1697,6 +1706,8 @@
             document.getElementById('fallback-foto-local').classList.add('hidden');
             document.getElementById('video-remoto').srcObject = null;
             document.getElementById('video-local').srcObject = null;
+            const boxLocal = document.getElementById('box-video-local');
+            if (boxLocal) boxLocal.classList.remove('hidden');
             document.getElementById('panel-participantes-llamada').innerHTML = '';
             document.getElementById('panel-participantes-llamada').classList.remove('activo');
             document.getElementById('box-video-principal').classList.remove('hidden');
