@@ -10,7 +10,7 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "./icon.svg",
+      "src": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS8rIJCPVxx1xoUfEA7FEeDtWNK1yNJ3RfUfndqvFvb7g&s=10",
       "type": "image/svg+xml",
       "sizes": "any",
       "purpose": "any maskable"
